@@ -1,18 +1,105 @@
 cv:
   name: A. Martin Gökçü
-  label:
+  label: CS & Engineering Student
   email: martingokcu@gmail.com
-  location:
+  location: Milan, Italy
   image: ""
-  summary:
+  summary: >
+    Computer Science master's student at Politecnico di Milano with experience building AI and workflow
+    automation tools in business environments. I work mainly with Python, LLM systems, Docker, and PostgreSQL.
+    My recent work includes agentic data systems, retrieval-based applications, and automation pipelines
+    for finance workflows.
 
   social_networks:
+    - network: LinkedIn
+      username: martin-gokcu
+    - network: GitHub
+      username: martingkc
 
   sections:
     Education:
+      - institution: Politecnico di Milano
+        location: Milan, Italy
+        area: Computer Science and Engineering — T2A Track
+        studyType: Master of Science
+        start_date: 2025-03
+        end_date: present
+
+      - institution: Politecnico di Milano
+        location: Milan, Italy
+        area: Computer Science and Engineering (prev. Mechanical Engineering 2020–2022)
+        studyType: Bachelor of Science
+        start_date: 2022-09
+        end_date: 2025-03
 
     Experience:
+      - company: Koinos Capital Sgr
+        position: Process Automation Intern
+        location: Milan, Italy
+        start_date: 2025-11
+        end_date: 2026-03
+        highlights:
+          - Built an automated financial metrics pipeline retrieving competitor sets, market data, and acquisition KPIs for portfolio evaluation of M&A targets, reducing analyst research preparation time by 3 hours per candidate.
+          - Built an LLM agent that pre-screened M&A prospects against acquisition criteria, reducing manual evaluation time for the investment team.
+
+      - company: Azimut Holding
+        position: Junior Software Developer Intern
+        location: Milan, Italy
+        start_date: 2023-11
+        end_date: 2024-07
+        highlights:
+          - Collaborated with a team of four engineers and financial advisors to design and develop a core banking application for Azimut Holding's new banking division.
+          - Built internal workflow automation libraries integrating Microsoft Graph and SugarCRM APIs, reducing manual data-handling overhead across the operations team.
+
+      - company: Brachitek
+        position: Junior Software Developer Intern
+        location: Milan, Italy
+        start_date: 2023-02
+        end_date: 2023-11
+
+    Projects:
+      - name: ambercow.com
+        summary: "Flask, Docker, LangChain, ChromaDB"
+        highlights:
+          - Built and deployed a news platform that scrapes and clusters content from 50+ international outlets and generates summaries and QA through a custom RAG pipeline.
+
+      - name: Agentic Data Lake
+        summary: "LangChain Deep Agent, Milvus"
+        highlights:
+          - Building an agentic system that unifies structured and unstructured data (spreadsheets, emails, PDFs, APIs) into a queryable research interface using a Graph RAG pipeline and a custom LangChain Deep Agent.
+
+      - name: LLM Fine-Tuning for TTS (D-Mel)
+        summary: "Python, PyTorch"
+        highlights:
+          - Developed a data generation pipeline downloading YouTube videos, performing speaker diarization, and converting audio into D-Mel tokens for TTS fine-tuning. Evaluated LoRA-based and full fine-tuning approaches.
+
+      - name: ANN-OY Vector Search Engine
+        summary: "C"
+        highlights:
+          - Built an on-disk vector search engine in C supporting fast cosine-similarity search over large embedding datasets.
+          - Integrated SQLite3 for ACID-compliant metadata storage and implemented binary serialization/deserialization for persistent index reuse.
 
     Skills:
+      - name: Languages
+        level: ""
+        keywords: "Python, C, C++, TypeScript, Java"
+      - name: Frameworks
+        level: ""
+        keywords: "Flask, LangChain, Apache Kafka"
+      - name: Developer Tools
+        level: ""
+        keywords: "Docker, Git, CI/CD"
+      - name: Databases
+        level: ""
+        keywords: "PostgreSQL, MySQL, MongoDB"
+      - name: Libraries
+        level: ""
+        keywords: "PyTorch, NumPy, Pandas, Matplotlib"
 
     Languages:
+      - name: Italian
+        summary: Native
+      - name: Turkish
+        summary: Native
+      - name: English
+        summary: "Advanced (IELTS: 8.5)"

@@ -14,4 +14,3 @@ latest_posts:
   enabled: false
 ---
 
-Write something about yourself here.

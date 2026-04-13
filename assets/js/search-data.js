@@ -18,17 +18,42 @@ ninja.data = [{
           },
         },{id: "nav-cv",
           title: "CV",
-          description: "This is a description of the page. You can modify it in &#39;_pages/cv.md&#39;. You can also change or remove the top pdf download button.",
+          description: "",
           section: "Navigation",
           handler: () => {
             window.location.href = "/cv/";
           },
-        },{
+        },{id: "post-hello-world",
+        
+          title: "Hello World",
+        
+        description: "First post.",
+        section: "Posts",
+        handler: () => {
+          
+            window.location.href = "/blog/2026/hello-world/";
+          
+        },
+      },{
         id: 'social-email',
         title: 'email',
         section: 'Socials',
         handler: () => {
           window.open("mailto:%6D%61%72%74%69%6E%67%6F%6B%63%75@%67%6D%61%69%6C.%63%6F%6D", "_blank");
+        },
+      },{
+        id: 'social-github',
+        title: 'GitHub',
+        section: 'Socials',
+        handler: () => {
+          window.open("https://github.com/martingkc", "_blank");
+        },
+      },{
+        id: 'social-linkedin',
+        title: 'LinkedIn',
+        section: 'Socials',
+        handler: () => {
+          window.open("https://www.linkedin.com/in/martin-gokcu", "_blank");
         },
       },{
         id: 'social-rss',

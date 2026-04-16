@@ -23,7 +23,18 @@ ninja.data = [{
           handler: () => {
             window.location.href = "/cv/";
           },
-        },{id: "post-hello-world",
+        },{id: "post-learning-vit-39-s",
+        
+          title: "Learning VIT&#39;s",
+        
+        description: "First post from my journey of mastering VLA&#39;s.",
+        section: "Posts",
+        handler: () => {
+          
+            window.location.href = "/blog/2026/learning-VIT/";
+          
+        },
+      },{id: "post-hello-world",
         
           title: "Hello World",
         

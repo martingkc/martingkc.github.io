@@ -23,7 +23,18 @@ ninja.data = [{
           handler: () => {
             window.location.href = "/cv/";
           },
-        },{id: "post-learning-vit-39-s",
+        },{id: "post-clip-models-and-image-captioning-using-clip-embeddings",
+        
+          title: "CLIP Models and Image Captioning using CLIP embeddings.",
+        
+        description: "CLIP Models and captioning using CLIP Embeddings",
+        section: "Posts",
+        handler: () => {
+          
+            window.location.href = "/blog/2026/image-captioning-using-clip/";
+          
+        },
+      },{id: "post-learning-vit-39-s",
         
           title: "Learning VIT&#39;s",
         

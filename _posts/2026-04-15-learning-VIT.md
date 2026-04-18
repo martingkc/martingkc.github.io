@@ -219,4 +219,4 @@ class VisionTransformer(nn.Module):
         return self.mlp_head(x[:, 0]) # spit out the answer 
 ```
 
-This particular example was specifically made to work on a chest x-ray multi-label classification task the full example with a sample dataset can be found on: [link to notebook]()
+This particular example was specifically made to work on a chest x-ray multi-label classification task the full example with a sample dataset can be found on: [link to notebook](https://colab.research.google.com/drive/1Jfa3Eue74PgM-RLgxTNDtUYStwjax_yE?usp=share_link)

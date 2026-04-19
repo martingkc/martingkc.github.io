@@ -19,7 +19,7 @@ function determineGiscusTheme() {
   let giscusAttributes = {
     src: "https://giscus.app/client.js",
     "data-repo": "martingkc/martingkc.github.io",
-    "data-repo-id": "",
+    "data-repo-id": "R_kgDOSBr4uA",
     "data-category": "Comments",
     "data-category-id": "",
     "data-mapping": "title",

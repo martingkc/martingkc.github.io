@@ -421,5 +421,5 @@ The results from both training runs are limited by the dataset size and domain s
 
 You can find the notebooks that contain the code and the datasets used in these examples here. 
 
-[Image Embedder](https://colab.research.google.com/drive/1YfOWpfFPOU3E7IvSNo1lNnIk_X6oCY1g?usp=share_link)
-[Embedding Captioning](https://github.com/martingkc/NLP_Notebooks/blob/main/clip-caption-gpt.ipynb)
+- [Image Embedder](https://colab.research.google.com/drive/1YfOWpfFPOU3E7IvSNo1lNnIk_X6oCY1g?usp=sharing)
+- [Embedding Captioning](https://github.com/martingkc/NLP_Notebooks/blob/main/clip-caption-gpt.ipynb)

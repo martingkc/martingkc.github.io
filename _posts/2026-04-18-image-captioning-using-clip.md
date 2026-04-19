@@ -5,6 +5,7 @@ date: 2026-04-18
 description: CLIP Models and captioning using CLIP Embeddings
 tags: []
 categories: [VLA, VLM, CLIP, pytorch, GPT]
+giscus_comments: true
 ---
 
 The natural next step after exploring how ViT's work behind the scenes in my journey of mastering VLA's is learning how CLIP models work. First of all, some people, including some of my professors and friends, state that "CLIP models" is a wrong statement since CLIP is actually the training method used and the models themselves generally consist of ViT's trained alongside a text encoder. I think that's partly true, CLIP is a contrastive training objective, but it's also a specific model family and model, so I'd argue it's earned the right to be called its own thing at this point. But at the end of the day it's a bit of both, its both a training method and a model category. 

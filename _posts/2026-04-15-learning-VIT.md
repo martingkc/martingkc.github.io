@@ -5,6 +5,7 @@ date: 2026-04-15
 description: First post from my journey of mastering VLA's. 
 tags: [VLA, VIT, CS]
 categories: []
+giscus_comments: true
 ---
 
 One of my goals for this year is to find new applications of NLP techniques in new areas such as robotics. In the past I had a few experiences in robotics whether it was building simple Robots using arduinos or RPI's with simple image recognition or designing odometry systems using ROS ( in which I sucked terribly at in my first year of uni and I'm honestly ashamed of that repo. ). So in the following months I'll try to delve a bit deeper in the world of VLA's, which is a topic that I'm actively considering doing my master thesis on.

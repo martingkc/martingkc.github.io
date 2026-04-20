@@ -2,7 +2,7 @@
 layout: post
 title: Learning VIT's 
 date: 2026-04-15
-description: First post from my journey of mastering VLA's. 
+description: Building a Vision Transformer (ViT) from scratch in PyTorch with 2D-RoPE positional encoding, applied to multi-label chest X-ray classification.
 tags: [VLA, VIT, CS]
 categories: []
 giscus_comments: true

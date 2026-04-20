@@ -2,7 +2,7 @@
 layout: post
 title: CLIP Models and Image Captioning using CLIP embeddings.
 date: 2026-04-18
-description: CLIP Models and captioning using CLIP Embeddings
+description: Exploring contrastive learning and Info-NCE loss and training a CLIP vision encoder, then building a GPT-2 image captioning model (ClipCap) trained on chest X-ray CLIP embeddings.
 tags: []
 categories: [VLA, VLM, CLIP, pytorch, GPT]
 giscus_comments: true

@@ -27,7 +27,7 @@ ninja.data = [{
         
           title: "CLIP Models and Image Captioning using CLIP embeddings.",
         
-        description: "CLIP Models and captioning using CLIP Embeddings",
+        description: "Exploring contrastive learning and Info-NCE loss and training a CLIP vision encoder, then building a GPT-2 image captioning model (ClipCap) trained on chest X-ray CLIP embeddings.",
         section: "Posts",
         handler: () => {
           
@@ -38,7 +38,7 @@ ninja.data = [{
         
           title: "Learning VIT&#39;s",
         
-        description: "First post from my journey of mastering VLA&#39;s.",
+        description: "Building a Vision Transformer (ViT) from scratch in PyTorch with 2D-RoPE positional encoding, applied to multi-label chest X-ray classification.",
         section: "Posts",
         handler: () => {
           

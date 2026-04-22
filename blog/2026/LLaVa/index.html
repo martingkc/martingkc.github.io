@@ -81,7 +81,7 @@
         <span class="p">)</span>
         <span class="n">full_mask</span> <span class="o">=</span> <span class="n">torch</span><span class="p">.</span><span class="nf">cat</span><span class="p">([</span><span class="n">visual_mask</span><span class="p">,</span> <span class="n">attention_mask</span><span class="p">.</span><span class="nf">cuda</span><span class="p">()],</span> <span class="n">dim</span><span class="o">=</span><span class="mi">1</span><span class="p">)</span>
 
-        <span class="c1"># extend labels — ignore visual positions
+        <span class="c1"># extend labels ignore visual positions
 </span>        <span class="k">if</span> <span class="n">labels</span> <span class="ow">is</span> <span class="ow">not</span> <span class="bp">None</span><span class="p">:</span>
             <span class="n">visual_labels</span> <span class="o">=</span> <span class="n">torch</span><span class="p">.</span><span class="nf">full</span><span class="p">(</span>
                 <span class="p">(</span><span class="n">patch_tokens</span><span class="p">.</span><span class="n">shape</span><span class="p">[</span><span class="mi">0</span><span class="p">],</span> <span class="n">n_visual</span><span class="p">),</span> <span class="o">-</span><span class="mi">100</span><span class="p">,</span>
@@ -89,11 +89,9 @@
             <span class="p">)</span>
             <span class="n">labels</span> <span class="o">=</span> <span class="n">torch</span><span class="p">.</span><span class="nf">cat</span><span class="p">([</span><span class="n">visual_labels</span><span class="p">,</span> <span class="n">labels</span><span class="p">.</span><span class="nf">cuda</span><span class="p">()],</span> <span class="n">dim</span><span class="o">=</span><span class="mi">1</span><span class="p">)</span>
 
-        <span class="c1"># forward — no labels passed to avoid unsloth fused loss conflict
-</span>        <span class="n">output</span> <span class="o">=</span> <span class="n">self</span><span class="p">.</span><span class="nf">llm</span><span class="p">(</span><span class="n">inputs_embeds</span><span class="o">=</span><span class="n">inputs_embeds</span><span class="p">,</span> <span class="n">attention_mask</span><span class="o">=</span><span class="n">full_mask</span><span class="p">)</span>
+        <span class="n">output</span> <span class="o">=</span> <span class="n">self</span><span class="p">.</span><span class="nf">llm</span><span class="p">(</span><span class="n">inputs_embeds</span><span class="o">=</span><span class="n">inputs_embeds</span><span class="p">,</span> <span class="n">attention_mask</span><span class="o">=</span><span class="n">full_mask</span><span class="p">)</span>
 
-        <span class="c1"># manual next-token loss with shift
-</span>        <span class="n">loss</span> <span class="o">=</span> <span class="bp">None</span>
+        <span class="n">loss</span> <span class="o">=</span> <span class="bp">None</span>
         <span class="k">if</span> <span class="n">labels</span> <span class="ow">is</span> <span class="ow">not</span> <span class="bp">None</span><span class="p">:</span>
             <span class="n">shift_logits</span> <span class="o">=</span> <span class="n">output</span><span class="p">.</span><span class="n">logits</span><span class="p">[...,</span> <span class="p">:</span><span class="o">-</span><span class="mi">1</span><span class="p">,</span> <span class="p">:].</span><span class="nf">contiguous</span><span class="p">()</span>
             <span class="n">shift_labels</span> <span class="o">=</span> <span class="n">labels</span><span class="p">[...,</span> <span class="mi">1</span><span class="p">:].</span><span class="nf">contiguous</span><span class="p">()</span>
@@ -108,8 +106,8 @@
     <span class="k">def</span> <span class="nf">generate_caption</span><span class="p">(</span><span class="n">self</span><span class="p">,</span> <span class="n">patch_tokens</span><span class="p">,</span> <span class="n">question</span><span class="p">,</span> <span class="n">tokenizer</span><span class="p">,</span> <span class="n">max_new_tokens</span><span class="o">=</span><span class="mi">128</span><span class="p">):</span>
       <span class="n">self</span><span class="p">.</span><span class="nf">eval</span><span class="p">()</span>
       <span class="k">with</span> <span class="n">torch</span><span class="p">.</span><span class="nf">no_grad</span><span class="p">():</span>
-          <span class="c1"># match whatever dtype the projection weights actually are
-</span>          <span class="n">proj_dtype</span> <span class="o">=</span> <span class="nf">next</span><span class="p">(</span><span class="n">self</span><span class="p">.</span><span class="n">projection</span><span class="p">.</span><span class="nf">parameters</span><span class="p">()).</span><span class="n">dtype</span>
+
+          <span class="n">proj_dtype</span> <span class="o">=</span> <span class="nf">next</span><span class="p">(</span><span class="n">self</span><span class="p">.</span><span class="n">projection</span><span class="p">.</span><span class="nf">parameters</span><span class="p">()).</span><span class="n">dtype</span>
           <span class="n">patch_tokens</span> <span class="o">=</span> <span class="n">patch_tokens</span><span class="p">.</span><span class="nf">unsqueeze</span><span class="p">(</span><span class="mi">0</span><span class="p">).</span><span class="nf">cuda</span><span class="p">().</span><span class="nf">to</span><span class="p">(</span><span class="n">proj_dtype</span><span class="p">)</span>
           <span class="n">visual_tokens</span> <span class="o">=</span> <span class="n">self</span><span class="p">.</span><span class="nf">projection</span><span class="p">(</span><span class="n">patch_tokens</span><span class="p">)</span>
 
@@ -236,7 +234,7 @@
 <span class="k">for</span> <span class="n">param</span> <span class="ow">in</span> <span class="n">vlm</span><span class="p">.</span><span class="n">projection</span><span class="p">.</span><span class="nf">parameters</span><span class="p">():</span>
     <span class="n">param</span><span class="p">.</span><span class="n">requires_grad</span> <span class="o">=</span> <span class="bp">True</span>
 
-<span class="n">ACCUMULATION_STEPS</span> <span class="o">=</span> <span class="mi">8</span>  <span class="c1"># effective batch size = 8 * 8 = 64
+<span class="n">ACCUMULATION_STEPS</span> <span class="o">=</span> <span class="mi">8</span>  <span class="c1"># batch size = 8 * 8 = 64
 </span>
 <span class="n">train_loader_s2</span> <span class="o">=</span> <span class="nc">DataLoader</span><span class="p">(</span>
     <span class="n">train_dataset_s2</span><span class="p">,</span>
@@ -295,8 +293,7 @@
                 <span class="n">shutil</span><span class="p">.</span><span class="nf">rmtree</span><span class="p">(</span><span class="n">prev</span><span class="p">)</span>
                 <span class="nf">print</span><span class="p">(</span><span class="sa">f</span><span class="sh">"</span><span class="s">deleted checkpoint at step </span><span class="si">{</span><span class="n">step</span> <span class="o">-</span> <span class="n">SAVE_EVERY</span><span class="si">}</span><span class="sh">"</span><span class="p">)</span>
 
-    <span class="c1"># epoch end sanity check
-</span>    <span class="n">sample</span> <span class="o">=</span> <span class="n">train_dataset_s2</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span>
+    <span class="n">sample</span> <span class="o">=</span> <span class="n">train_dataset_s2</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span>
     <span class="n">response</span> <span class="o">=</span> <span class="n">vlm</span><span class="p">.</span><span class="nf">generate_caption</span><span class="p">(</span>
         <span class="n">sample</span><span class="p">[</span><span class="sh">"</span><span class="s">patch_tokens</span><span class="sh">"</span><span class="p">],</span>
         <span class="sh">"</span><span class="s">What is in this image?</span><span class="sh">"</span><span class="p">,</span>
@@ -304,8 +301,8 @@
     <span class="p">)</span>
     <span class="nf">print</span><span class="p">(</span><span class="sa">f</span><span class="sh">"</span><span class="s">[S2] epoch </span><span class="si">{</span><span class="n">epoch</span><span class="si">}</span><span class="s"> sample: </span><span class="si">{</span><span class="n">response</span><span class="si">}</span><span class="sh">"</span><span class="p">)</span>
     <span class="nf">print</span><span class="p">(</span><span class="sa">f</span><span class="sh">"</span><span class="s">[S2] epoch </span><span class="si">{</span><span class="n">epoch</span><span class="si">}</span><span class="s"> done | avg loss </span><span class="si">{</span><span class="n">total_loss</span><span class="o">/</span><span class="nf">len</span><span class="p">(</span><span class="n">train_loader_s2</span><span class="p">)</span><span class="si">:</span><span class="p">.</span><span class="mi">4</span><span class="n">f</span><span class="si">}</span><span class="sh">"</span><span class="p">)</span>
-    <span class="n">vlm</span><span class="p">.</span><span class="nf">train</span><span class="p">()</span>  <span class="c1"># restore train mode after generate_caption sets eval
-</span>
+    <span class="n">vlm</span><span class="p">.</span><span class="nf">train</span><span class="p">()</span>  
+
 <span class="nf">print</span><span class="p">(</span><span class="sh">"</span><span class="s">stage 2 training complete</span><span class="sh">"</span><span class="p">)</span>
 </code></pre></div></div> <h2 id="running-the-model">Running the model</h2> <div class="language-python highlighter-rouge"><div class="highlight"><pre class="highlight"><code><span class="kn">import</span> <span class="n">os</span>
 <span class="kn">import</span> <span class="n">torch</span>

@@ -23,7 +23,18 @@ ninja.data = [{
           handler: () => {
             window.location.href = "/cv/";
           },
-        },{id: "post-clip-models-and-image-captioning-using-clip-embeddings",
+        },{id: "post-fakellava-building-a-lightweight-llava-style-vlm-with-qwen2-5-and-clip",
+        
+          title: "FakeLLaVA — Building a Lightweight LLaVa style VLM with Qwen2.5 and CLIP",
+        
+        description: "Training a lightweight LLaVA-style VLM by connecting a CLIP vision encoder to Qwen2.5-0.5B through a two-layer projection MLP.",
+        section: "Posts",
+        handler: () => {
+          
+            window.location.href = "/blog/2026/LLaVa/";
+          
+        },
+      },{id: "post-clip-models-and-image-captioning-using-clip-embeddings",
         
           title: "CLIP Models and Image Captioning using CLIP embeddings.",
         

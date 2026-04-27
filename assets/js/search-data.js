@@ -23,7 +23,18 @@ ninja.data = [{
           handler: () => {
             window.location.href = "/cv/";
           },
-        },{id: "post-histogram-in-cuda",
+        },{id: "post-convolutions-in-cuda",
+        
+          title: "Convolutions in CUDA",
+        
+        description: "Exploring different optimization methods in the implementation of Convolutions in CUDA.",
+        section: "Posts",
+        handler: () => {
+          
+            window.location.href = "/blog/2026/convolutions-in-cuda/";
+          
+        },
+      },{id: "post-histogram-in-cuda",
         
           title: "Histogram in CUDA",
         

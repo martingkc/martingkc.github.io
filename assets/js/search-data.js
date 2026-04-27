@@ -23,7 +23,18 @@ ninja.data = [{
           handler: () => {
             window.location.href = "/cv/";
           },
-        },{id: "post-fakellava-building-a-lightweight-llava-style-vlm-with-qwen2-5-and-clip",
+        },{id: "post-histogram-in-cuda",
+        
+          title: "Histogram in CUDA",
+        
+        description: "Exploring different optimization methods in the implementation of Histograms in CUDA.",
+        section: "Posts",
+        handler: () => {
+          
+            window.location.href = "/blog/2026/histogram_in_CUDA/";
+          
+        },
+      },{id: "post-fakellava-building-a-lightweight-llava-style-vlm-with-qwen2-5-and-clip",
         
           title: "FakeLLaVA — Building a Lightweight LLaVa style VLM with Qwen2.5 and CLIP",
         

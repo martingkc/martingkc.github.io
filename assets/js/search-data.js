@@ -23,7 +23,18 @@ ninja.data = [{
           handler: () => {
             window.location.href = "/cv/";
           },
-        },{id: "post-convolutions-in-cuda",
+        },{id: "post-stencil-in-cuda",
+        
+          title: "Stencil in CUDA",
+        
+        description: "Exploring different optimization methods in the implementation of 3D stencils in CUDA.",
+        section: "Posts",
+        handler: () => {
+          
+            window.location.href = "/blog/2026/scan/";
+          
+        },
+      },{id: "post-convolutions-in-cuda",
         
           title: "Convolutions in CUDA",
         

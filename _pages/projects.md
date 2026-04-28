@@ -4,7 +4,7 @@ title: projects
 permalink: /projects/
 description: Things I've built.
 nav: true
-nav_order: 3
+nav_order: 1
 display_categories: [AI / ML, Systems, Full-Stack]
 horizontal: false
 ---

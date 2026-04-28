@@ -1,7 +1,7 @@
 ---
 layout: page
-title: Brainfuck Compiler
-description: Brainfuck-to-x86 compiler in C covering lexing, IR generation, and native code emission.
+title: Brainfuck Interpreter
+description: Brainfuck interpreter in C 
 importance: 3
 category: Systems
 github: https://github.com/martingkc/a-simple-brainfuck-compiler-in-c

@@ -119,11 +119,11 @@ cv:
         highlights:
           - Full-stack mobile app built with Flutter (GetX) and a Flask backend; supports user search, contact card customization, follow system, and REST-polled messaging.
 
-      - name: Brainfuck Compiler
+      - name: Brainfuck Interpreter
         summary: "C"
         url: "https://github.com/martingkc/a-simple-brainfuck-compiler-in-c"
         highlights:
-          - Wrote a Brainfuck-to-x86 compiler in C as a low-level systems exercise, covering lexing, IR generation, and code emission.
+          - Built a Brainfuck interpreter in C — tape-based execution with bracket-matching functions for loop jumps.
 
     Skills:
       - name: Languages

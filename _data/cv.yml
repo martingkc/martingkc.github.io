@@ -58,10 +58,30 @@ cv:
         end_date: 2023-11
 
     Projects:
+      - name: iData — Document Intelligence Platform
+        summary: "Python, Flask, React, Milvus, MongoDB, PostgreSQL, Docker, LangChain"
+        url: "https://github.com/martingkc/iData"
+        highlights:
+          - Built a self-hosted enterprise document intelligence platform that automatically ingests, parses, chunks, and indexes files dropped into a watched folder or synced from cloud storage (Google Drive, S3).
+          - Multi-agent RAG backend (Orchestrator → Document Agent + SQL Agent) answers natural-language questions with inline citations, SQL lookups, and interactive chart generation through a React frontend.
+
       - name: ambercow.com
         summary: "Flask, Docker, LangChain, ChromaDB"
         highlights:
           - Built and deployed a news platform that scrapes and clusters content from 50+ international outlets and generates summaries and QA through a custom RAG pipeline.
+
+      - name: FakeLLaVA — Lightweight Vision-Language Model
+        summary: "Python, PyTorch, Hugging Face Transformers, CLIP"
+        url: "https://github.com/martingkc/FakeLLaVa"
+        highlights:
+          - Built a LLaVA-style VLM by connecting a CLIP ViT-B/32 vision encoder to Qwen2.5-0.5B through a two-layer projection MLP, trained in two stages (projection alignment, then full fine-tune) on CC3M and LLaVA-Instruct-150K.
+          - Trained on Colab A100 (~6 h); published a blog post documenting the architecture and training process.
+
+      - name: COT-RAG Retriever Agent
+        summary: "Python, Unsloth, LangChain"
+        url: "https://github.com/martingkc/COT-RAG-Agent"
+        highlights:
+          - Fine-tuned a language model using Unsloth to act as a chain-of-thought retriever inside a RAG pipeline, enabling structured reasoning over retrieved passages before generating answers.
 
       - name: Agentic Data Lake
         summary: "LangChain Deep Agent, Milvus"
@@ -70,14 +90,40 @@ cv:
 
       - name: LLM Fine-Tuning for TTS (D-Mel)
         summary: "Python, PyTorch"
+        url: "https://github.com/martingkc/dMel_Tokenization"
         highlights:
           - Developed a data generation pipeline downloading YouTube videos, performing speaker diarization, and converting audio into D-Mel tokens for TTS fine-tuning. Evaluated LoRA-based and full fine-tuning approaches.
 
+      - name: Voice Extraction & Dataset Builder
+        summary: "Python, Whisper, pyannote.audio"
+        url: "https://github.com/martingkc/voice_extraction"
+        highlights:
+          - Pipeline that diarizes audio, transcribes each speaker segment with Whisper, and packages the output as a labeled dataset ready for TTS or ASR fine-tuning.
+
       - name: ANN-OY Vector Search Engine
-        summary: "C"
+        summary: "C, SQLite3"
+        url: "https://github.com/martingkc/ANNOY"
         highlights:
           - Built an on-disk vector search engine in C supporting fast cosine-similarity search over large embedding datasets.
           - Integrated SQLite3 for ACID-compliant metadata storage and implemented binary serialization/deserialization for persistent index reuse.
+
+      - name: RISC-V Simulator
+        summary: "Python, Streamlit"
+        url: "https://github.com/martingkc/RISCV-Simulator"
+        highlights:
+          - Implemented a RISC-V instruction set simulator in Python covering arithmetic, logical, shift, memory, and branch instructions, with an interactive Streamlit UI for step-through execution.
+
+      - name: Contact Card Sharing App
+        summary: "Flutter, Flask, Jinja2"
+        url: "https://github.com/martingkc/card_app"
+        highlights:
+          - Full-stack mobile app built with Flutter (GetX) and a Flask backend; supports user search, contact card customization, follow system, and REST-polled messaging.
+
+      - name: Brainfuck Compiler
+        summary: "C"
+        url: "https://github.com/martingkc/a-simple-brainfuck-compiler-in-c"
+        highlights:
+          - Wrote a Brainfuck-to-x86 compiler in C as a low-level systems exercise, covering lexing, IR generation, and code emission.
 
     Skills:
       - name: Languages

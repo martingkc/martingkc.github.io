@@ -9,7 +9,14 @@ ninja.data = [{
     handler: () => {
       window.location.href = "/";
     },
-  },{id: "nav-blog",
+  },{id: "nav-projects",
+          title: "projects",
+          description: "Things I&#39;ve built.",
+          section: "Navigation",
+          handler: () => {
+            window.location.href = "/projects/";
+          },
+        },{id: "nav-blog",
           title: "blog",
           description: "",
           section: "Navigation",
@@ -22,13 +29,6 @@ ninja.data = [{
           section: "Navigation",
           handler: () => {
             window.location.href = "/cv/";
-          },
-        },{id: "nav-projects",
-          title: "projects",
-          description: "Things I&#39;ve built.",
-          section: "Navigation",
-          handler: () => {
-            window.location.href = "/projects/";
           },
         },{id: "post-stencil-in-cuda",
         
@@ -107,9 +107,9 @@ ninja.data = [{
             window.location.href = "/blog/2026/hello-world/";
           
         },
-      },{id: "projects-brainfuck-compiler",
-          title: 'Brainfuck Compiler',
-          description: "Brainfuck-to-x86 compiler in C covering lexing, IR generation, and native code emission.",
+      },{id: "projects-brainfuck-interpreter",
+          title: 'Brainfuck Interpreter',
+          description: "Brainfuck interpreter in C",
           section: "Projects",handler: () => {
               window.location.href = "/projects/10_project/";
             },},{id: "projects-contact-card-app",

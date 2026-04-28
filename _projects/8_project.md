@@ -1,7 +1,7 @@
 ---
 layout: page
-title: ANN-OY Vector Search Engine
-description: On-disk vector search engine in C with cosine-similarity search over large embedding datasets. Uses SQLite3 for ACID-compliant metadata and binary serialization for persistent index reuse.
+title: ANN-OY
+description: On-disk cosine-similarity vector search engine in C with SQLite3 metadata and binary index serialization.
 importance: 1
 category: Systems
 github: https://github.com/martingkc/ANNOY

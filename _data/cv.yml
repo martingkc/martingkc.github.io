@@ -83,11 +83,6 @@ cv:
         highlights:
           - Fine-tuned a language model using Unsloth to act as a chain-of-thought retriever inside a RAG pipeline, enabling structured reasoning over retrieved passages before generating answers.
 
-      - name: Agentic Data Lake
-        summary: "LangChain Deep Agent, Milvus"
-        highlights:
-          - Building an agentic system that unifies structured and unstructured data (spreadsheets, emails, PDFs, APIs) into a queryable research interface using a Graph RAG pipeline and a custom LangChain Deep Agent.
-
       - name: LLM Fine-Tuning for TTS (D-Mel)
         summary: "Python, PyTorch"
         url: "https://github.com/martingkc/dMel_Tokenization"

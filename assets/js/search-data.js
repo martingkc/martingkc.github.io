@@ -30,7 +30,18 @@ ninja.data = [{
           handler: () => {
             window.location.href = "/cv/";
           },
-        },{id: "post-stencil-in-cuda",
+        },{id: "post-building-ann-oy-a-small-vector-index-in-c",
+        
+          title: "Building ANN-OY: a small vector index in C",
+        
+        description: "Simple vector db implementation in c using ANNOY",
+        section: "Posts",
+        handler: () => {
+          
+            window.location.href = "/blog/2026/ANN/";
+          
+        },
+      },{id: "post-stencil-in-cuda",
         
           title: "Stencil in CUDA",
         
@@ -132,11 +143,6 @@ ninja.data = [{
           description: "LLaVA-style VLM — CLIP ViT-B/32 connected to Qwen2.5-0.5B through a two-layer projection MLP.",
           section: "Projects",handler: () => {
               window.location.href = "/projects/3_project/";
-            },},{id: "projects-project-4",
-          title: 'project 4',
-          description: "another without an image",
-          section: "Projects",handler: () => {
-              window.location.href = "/projects/4_project/";
             },},{id: "projects-cot-rag-retriever",
           title: 'COT-RAG Retriever',
           description: "Chain-of-thought retriever fine-tuned with Unsloth to reason over retrieved passages inside a RAG pipeline.",

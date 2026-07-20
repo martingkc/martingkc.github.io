@@ -1,0 +1,1251 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Memory delivery in text-to-SQL agents, Act 1</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@400;500;600&family=IBM+Plex+Sans+Condensed:wght@500;600;700&family=IBM+Plex+Sans:wght@400;500;600&display=swap" rel="stylesheet">
+<style>
+:root{
+  --ground:#EDF0F3;
+  --paper:#FFFFFF;
+  --ink:#14203A;
+  --ink-mid:#4A5A72;
+  --ink-dim:#8494A8;
+  --rule:#D3DAE2;
+  --rule-soft:#E4E9EE;
+  --signal:#C8382E;
+  --safe:#1F7A6E;
+  --band:rgba(20,32,58,.075);
+  --sans:'IBM Plex Sans',system-ui,sans-serif;
+  --cond:'IBM Plex Sans Condensed','IBM Plex Sans',system-ui,sans-serif;
+  --mono:'IBM Plex Mono',ui-monospace,monospace;
+}
+*{box-sizing:border-box}
+html{scroll-behavior:smooth}
+body{
+  margin:0;background:var(--ground);color:var(--ink);
+  font-family:var(--sans);font-size:16px;line-height:1.6;
+  -webkit-font-smoothing:antialiased;
+}
+@media (prefers-reduced-motion:reduce){html{scroll-behavior:auto}*{transition:none!important;animation:none!important}}
+
+/* ---------- layout ---------- */
+.shell{display:flex;min-height:100vh}
+aside{
+  width:268px;flex:none;position:sticky;top:0;height:100vh;
+  background:var(--ink);color:#DDE4EC;padding:30px 24px;
+  display:flex;flex-direction:column;gap:26px;overflow-y:auto;
+}
+main{flex:1;min-width:0;padding:64px 56px 120px;max-width:1080px}
+
+/* ---------- sidebar ---------- */
+.brand{font-family:var(--cond);font-weight:700;font-size:21px;line-height:1.2;color:#fff;letter-spacing:-.01em}
+.brand span{display:block;font-family:var(--mono);font-size:10.5px;font-weight:400;
+  letter-spacing:.2em;text-transform:uppercase;color:#7E93AC;margin-top:9px}
+.side-actions{margin-top:34px;display:flex;flex-direction:column;gap:9px}
+.btn{
+  display:flex;align-items:center;justify-content:space-between;gap:10px;
+  font-family:var(--mono);font-size:12.5px;font-weight:500;
+  padding:12px 14px;border-radius:6px;text-decoration:none;cursor:pointer;
+  border:1px solid rgba(255,255,255,.17);background:transparent;color:#DDE4EC;
+  width:100%;text-align:left;transition:background .15s,border-color .15s;
+}
+.btn:hover,.btn:focus-visible{background:rgba(255,255,255,.09);border-color:rgba(255,255,255,.34)}
+.btn.primary{background:#fff;color:var(--ink);border-color:#fff;font-weight:600}
+.btn.primary:hover{background:#E6ECF2}
+.btn em{font-style:normal;opacity:.5}
+.side-meta{font-family:var(--mono);font-size:10.5px;line-height:1.7;color:#7E93AC;
+  border-top:1px solid rgba(255,255,255,.13);padding-top:16px;margin-top:auto}
+.side-meta b{color:#C3D0DE;font-weight:500}
+
+/* ---------- type ---------- */
+.eyebrow{font-family:var(--mono);font-size:11px;letter-spacing:.2em;text-transform:uppercase;
+  color:var(--ink-dim);margin:0 0 16px}
+h1{font-family:var(--cond);font-weight:700;font-size:clamp(32px,4.6vw,52px);line-height:1.06;
+  letter-spacing:-.025em;margin:0 0 22px;max-width:19ch}
+h2{font-family:var(--cond);font-weight:600;font-size:27px;line-height:1.2;
+  letter-spacing:-.015em;margin:0 0 6px}
+h3{font-family:var(--cond);font-weight:600;font-size:17px;margin:0 0 8px;letter-spacing:-.005em}
+p{margin:0 0 15px;max-width:70ch;color:var(--ink-mid)}
+p strong{color:var(--ink);font-weight:600}
+.lede{font-size:19px;line-height:1.55;color:var(--ink);max-width:62ch}
+.lede b{font-weight:600}
+section{margin-bottom:78px;scroll-margin-top:32px}
+.sec-head{display:flex;align-items:baseline;gap:14px;margin-bottom:20px;
+  padding-bottom:14px;border-bottom:1px solid var(--rule)}
+.sec-head .n{font-family:var(--mono);font-size:12px;color:var(--ink-dim);letter-spacing:.06em}
+.sec-head p{margin:0;font-size:14px;color:var(--ink-dim);flex:1;text-align:right;max-width:none}
+
+/* ---------- cards / figures ---------- */
+figure{margin:0 0 20px;background:var(--paper);border:1px solid var(--rule);
+  border-radius:10px;padding:24px 26px 20px}
+figcaption{font-family:var(--mono);font-size:11.5px;line-height:1.7;color:var(--ink-dim);
+  margin-top:16px;padding-top:14px;border-top:1px solid var(--rule-soft)}
+figcaption b{color:var(--ink-mid);font-weight:500}
+svg{display:block;width:100%;height:auto}
+.legend{display:flex;flex-wrap:wrap;gap:8px 20px;margin-bottom:16px;
+  font-family:var(--mono);font-size:11.5px;color:var(--ink-mid)}
+.legend span{display:flex;align-items:center;gap:7px}
+.sw{width:11px;height:11px;border-radius:2px;flex:none}
+
+/* ---------- callout ---------- */
+.callout{background:var(--paper);border:1px solid var(--rule);border-left:3px solid var(--signal);
+  border-radius:8px;padding:20px 24px;margin:0 0 20px}
+.callout.safe{border-left-color:var(--safe)}
+.callout p:last-child{margin-bottom:0}
+.callout .k{font-family:var(--mono);font-size:11px;letter-spacing:.16em;text-transform:uppercase;
+  color:var(--signal);display:block;margin-bottom:9px}
+.callout.safe .k{color:var(--safe)}
+
+/* ---------- stat row ---------- */
+.stats{display:grid;grid-template-columns:repeat(auto-fit,minmax(150px,1fr));gap:1px;
+  background:var(--rule);border:1px solid var(--rule);border-radius:9px;overflow:hidden;margin-bottom:22px}
+.stat{background:var(--paper);padding:18px 20px}
+.stat .v{font-family:var(--cond);font-size:31px;font-weight:600;letter-spacing:-.02em;line-height:1}
+.stat .v.sig{color:var(--signal)}
+.stat .v.safe{color:var(--safe)}
+.stat .v.dim{color:var(--ink-dim)}
+.stat .l{font-family:var(--mono);font-size:10.5px;line-height:1.5;color:var(--ink-dim);
+  margin-top:9px;text-transform:uppercase;letter-spacing:.08em}
+
+/* ---------- tables ---------- */
+table{width:100%;border-collapse:collapse;font-family:var(--mono);font-size:13px}
+th{text-align:left;font-weight:500;color:var(--ink-dim);font-size:10.5px;
+  letter-spacing:.1em;text-transform:uppercase;padding:0 12px 10px 0;border-bottom:1px solid var(--rule)}
+td{padding:10px 12px 10px 0;border-bottom:1px solid var(--rule-soft);color:var(--ink-mid)}
+td:first-child{color:var(--ink)}
+tr:last-child td{border-bottom:none}
+td.num{text-align:right;padding-right:22px}
+.sig{color:var(--signal);font-weight:500}
+.safe{color:var(--safe);font-weight:500}
+.dim{color:var(--ink-dim)}
+
+/* ---------- probe explorer ---------- */
+.tabs{display:flex;flex-wrap:wrap;gap:6px;margin-bottom:18px}
+.tab{font-family:var(--mono);font-size:12px;padding:8px 14px;border-radius:6px;cursor:pointer;
+  border:1px solid var(--rule);background:var(--paper);color:var(--ink-mid);transition:.15s}
+.tab:hover{border-color:var(--ink-dim)}
+.tab[aria-selected="true"]{background:var(--ink);border-color:var(--ink);color:#fff}
+.panel{display:none;background:var(--paper);border:1px solid var(--rule);border-radius:10px;overflow:hidden}
+.panel.on{display:block}
+.panel-grid{display:grid;grid-template-columns:1fr 1fr;gap:0}
+@media (max-width:820px){.panel-grid{grid-template-columns:1fr}}
+.panel-col{padding:22px 24px}
+.panel-col+.panel-col{border-left:1px solid var(--rule-soft)}
+@media (max-width:820px){.panel-col+.panel-col{border-left:none;border-top:1px solid var(--rule-soft)}}
+.panel h3{font-family:var(--mono);font-size:10.5px;letter-spacing:.14em;text-transform:uppercase;
+  color:var(--ink-dim);font-weight:500;margin-bottom:14px}
+.kv{display:flex;justify-content:space-between;gap:16px;font-family:var(--mono);font-size:12.5px;
+  padding:7px 0;border-bottom:1px solid var(--rule-soft)}
+.kv:last-child{border-bottom:none}
+.kv span:first-child{color:var(--ink-dim)}
+.kv span:last-child{color:var(--ink);font-weight:500;text-align:right}
+.log{background:#0F1826;color:#C3D3E3;font-family:var(--mono);font-size:11.5px;line-height:1.75;
+  padding:20px 24px;overflow-x:auto;white-space:pre;border-top:1px solid var(--rule)}
+.log .c{color:#63788F}
+.log .r{color:#E8776C}
+.log .g{color:#5FB8A6}
+
+.arms{border:1px solid var(--rule);border-radius:10px;overflow:hidden;background:var(--paper);margin-top:20px}
+.arms .row{display:flex;gap:20px;padding:16px 22px;border-bottom:1px solid var(--rule-soft)}
+.arms .row:last-child{border-bottom:none}
+.arms .nm{font-family:var(--mono);font-size:12.5px;font-weight:500;min-width:132px;flex:none;color:var(--ink)}
+.arms .nm i{display:block;font-style:normal;font-size:10px;color:var(--ink-dim);
+  letter-spacing:.1em;text-transform:uppercase;margin-top:5px}
+.arms .tx{font-size:14.5px;line-height:1.55;color:var(--ink-mid)}
+.arms .tx b{color:var(--ink);font-weight:600}
+@media (max-width:640px){.arms .row{flex-direction:column;gap:8px}}
+
+/* ---------- code ---------- */
+.code{background:#0F1826;color:#C3D3E3;font-family:var(--mono);font-size:12px;line-height:1.8;
+  padding:22px 26px;border-radius:9px;overflow-x:auto;white-space:pre;margin:0 0 18px}
+.code .c{color:#63788F}.code .k{color:#7FA7D6}.code .s{color:#5FB8A6}
+.code .r{color:#E8776C}
+.two-col{display:grid;grid-template-columns:1fr 1fr;gap:18px}
+@media (max-width:860px){.two-col{grid-template-columns:1fr}}
+.jsonbox{background:#0F1826;border-radius:9px;overflow:hidden}
+.jsonbox .hd{display:flex;justify-content:space-between;align-items:center;gap:12px;
+  padding:12px 20px;border-bottom:1px solid #22314A;font-family:var(--mono);font-size:11px;
+  color:#7E93AC;letter-spacing:.06em}
+.jsonbox .hd b{color:#C3D3E3;font-weight:500;letter-spacing:0}
+.jsonbox pre{margin:0;padding:20px 24px;overflow-x:auto;font-family:var(--mono);
+  font-size:11.5px;line-height:1.8;color:#C3D3E3}
+.verdict{display:flex;flex-wrap:wrap;gap:0;border-top:1px solid #22314A}
+.verdict div{flex:1;min-width:150px;padding:14px 20px;font-family:var(--mono);font-size:11.5px}
+.verdict div+div{border-left:1px solid #22314A}
+.verdict span{display:block;color:#63788F;font-size:10px;letter-spacing:.12em;
+  text-transform:uppercase;margin-bottom:6px}
+.verdict b{font-weight:500;color:#C3D3E3}
+.verdict b.r{color:#E8776C}.verdict b.g{color:#5FB8A6}
+
+.tab2{font-family:var(--mono);font-size:12px;padding:8px 14px;border-radius:6px;cursor:pointer;
+  border:1px solid var(--rule);background:var(--paper);color:var(--ink-mid);transition:.15s}
+.tab2:hover{border-color:var(--ink-dim)}
+.tab2[aria-selected="true"]{background:var(--ink);border-color:var(--ink);color:#fff}
+.eppanel{display:none}.eppanel.on{display:block}
+
+/* ---------- act 2 ---------- */
+.next{display:grid;grid-template-columns:repeat(auto-fit,minmax(240px,1fr));gap:16px}
+.next article{background:var(--paper);border:1px solid var(--rule);border-radius:10px;padding:22px 24px}
+.next .tagx{font-family:var(--mono);font-size:10.5px;letter-spacing:.14em;text-transform:uppercase;
+  color:var(--ink-dim);display:block;margin-bottom:10px}
+.next p{font-size:14.5px;margin-bottom:0}
+
+@media (max-width:940px){
+  .shell{flex-direction:column}
+  aside{width:100%;height:auto;position:static;flex-direction:row;flex-wrap:wrap;
+    align-items:center;gap:16px;padding:20px}
+  .side-actions{margin:0;flex-direction:row;width:auto}
+  .btn{width:auto}
+  .side-meta{display:none}
+  main{padding:36px 20px 80px}
+}
+</style>
+</head>
+<body>
+<div class="shell">
+
+<aside>
+  <div class="brand">Why do text-to-SQL agents ignore their memory?
+    <span>Act 1 · diagnosis</span>
+  </div>
+
+
+  <div class="side-actions">
+    <!-- TODO: replace with the real repository URL -->
+    <a class="btn primary" href="https://github.com/" target="_blank" rel="noopener">
+      Source on GitHub <em>↗</em>
+    </a>
+    <button class="btn" type="button" id="jump-probes">
+      Probe results &amp; logs <em>↓</em>
+    </button>
+  </div>
+
+  <div class="side-meta">
+    <b>FIBEN</b> (IBM) · 152 tables<br>
+    115 questions · gpt-4o-mini<br>
+    5 arms × 3 full runs<br>
+    ~120 unit tests
+  </div>
+</aside>
+
+<main>
+
+<!-- ================= HERO ================= -->
+<section id="result" style="margin-bottom:64px">
+  <h1>Why do text-to-SQL agents ignore their memory?</h1>
+  <p class="lede">They don't ignore it. They trust it and stop looking. That trust saves 25% of the tokens and costs 8 points of accuracy, unless the memory comes from the schema itself, in which case it does not cause any accuracy loss, by trading roughly four join errors fixed for seven new output-shape errors.</p>
+
+  <!-- TL;DR -->
+  <div class="callout" style="margin:28px 0 32px;border-left-color:var(--ink);background:#FAFBFC;">
+    <span class="k" style="color:var(--ink);">tl;dr</span>
+    <p style="margin-bottom:0;font-size:15px;line-height:1.6;color:var(--ink-mid);">
+      <strong style="color:var(--ink);">The finding:</strong> Pushing memory into the prompt cuts tokens by 25% and accuracy by 8 points.
+      The agent is not ignoring the memory, it is following it and stopping exploration early.
+      <strong style="color:var(--ink);">The twist:</strong> Memory built for free from the schema (foreign-key join routes) saves almost as many tokens
+      with no relevant accuracy loss, by trading roughly four join errors fixed for seven output-shape errors caused. <strong style="color:var(--ink);">The question for Act 2:</strong> Can we get the cost saving without the silent degradation?
+    </p>
+  </div>
+
+  <figure style="margin-top:32px">
+    <div class="legend">
+      <span><i class="sw" style="background:rgba(20,32,58,.10);border:1px solid #B0BCC9"></i>this arm&#39;s spread, 3 runs</span>
+      <span><i class="sw" style="background:var(--ink-dim);border-radius:50%"></i>one run</span>
+      <span><i class="sw" style="background:var(--ink);height:2px;border-radius:0"></i>arm mean</span>
+    </div>
+    <svg viewBox="0 0 900 392" role="img" aria-label="Accuracy of five arms across three runs, each with its own spread band">
+      <g stroke="#E4E9EE" stroke-width="1">
+      <line x1="90" y1="320" x2="860" y2="320"/>
+      <line x1="90" y1="278" x2="860" y2="278"/>
+      <line x1="90" y1="208" x2="860" y2="208"/>
+      <line x1="90" y1="138" x2="860" y2="138"/>
+      <line x1="90" y1="68" x2="860" y2="68"/>
+      </g>
+      <g font-family="IBM Plex Mono" font-size="11" fill="#8494A8" text-anchor="end">
+      <text x="76" y="324">42</text>
+      <text x="76" y="282">45</text>
+      <text x="76" y="212">50</text>
+      <text x="76" y="142">55</text>
+      <text x="76" y="72">60</text>
+      </g>
+      <text x="30" y="180" font-family="IBM Plex Mono" font-size="11" fill="#8494A8" transform="rotate(-90 30 180)" text-anchor="middle">correct / 115</text>
+      <rect x="127" y="110" width="80" height="42" rx="4" fill="rgba(20,32,58,.10)" stroke="#B0BCC9" stroke-width="1"/>
+      <text x="121" y="121" font-family="IBM Plex Mono" font-size="9.5" fill="#14203A" text-anchor="end">57</text>
+      <text x="121" y="149" font-family="IBM Plex Mono" font-size="9.5" fill="#14203A" text-anchor="end">54</text>
+      <circle cx="145" cy="110" r="4.5" fill="#8494A8"/>
+      <circle cx="167" cy="152" r="4.5" fill="#8494A8"/>
+      <circle cx="189" cy="124" r="4.5" fill="#8494A8"/>
+      <line x1="127" y1="128.19999999999996" x2="207" y2="128.19999999999996" stroke="#14203A" stroke-width="2.5"/>
+      <text x="167" y="349" font-family="IBM Plex Sans Condensed" font-size="14" font-weight="600" fill="#14203A" text-anchor="middle">no memory</text>
+      <text x="167" y="368" font-family="IBM Plex Mono" font-size="11" fill="#8494A8" text-anchor="middle">55.7 avg</text>
+      <text x="167" y="384" font-family="IBM Plex Mono" font-size="9.5" fill="#B0BCC9" text-anchor="middle">baseline</text>
+      <rect x="281" y="208" width="80" height="70" rx="4" fill="rgba(200,56,46,.14)" stroke="#C8382E" stroke-width="1"/>
+      <text x="275" y="219" font-family="IBM Plex Mono" font-size="9.5" fill="#C8382E" text-anchor="end">50</text>
+      <text x="275" y="275" font-family="IBM Plex Mono" font-size="9.5" fill="#C8382E" text-anchor="end">45</text>
+      <circle cx="299" cy="236" r="4.5" fill="#C8382E"/>
+      <circle cx="321" cy="208" r="4.5" fill="#C8382E"/>
+      <circle cx="343" cy="278" r="4.5" fill="#C8382E"/>
+      <line x1="281" y1="240.19999999999996" x2="361" y2="240.19999999999996" stroke="#C8382E" stroke-width="2.5"/>
+      <text x="321" y="349" font-family="IBM Plex Sans Condensed" font-size="14" font-weight="600" fill="#C8382E" text-anchor="middle">push</text>
+      <text x="321" y="368" font-family="IBM Plex Mono" font-size="11" fill="#C8382E" text-anchor="middle">47.7 avg</text>
+      <text x="321" y="384" font-family="IBM Plex Mono" font-size="9.5" fill="#C8382E" text-anchor="middle">clears the baseline entirely</text>
+      <rect x="435" y="68" width="80" height="70" rx="4" fill="rgba(20,32,58,.10)" stroke="#B0BCC9" stroke-width="1"/>
+      <text x="429" y="79" font-family="IBM Plex Mono" font-size="9.5" fill="#14203A" text-anchor="end">60</text>
+      <text x="429" y="135" font-family="IBM Plex Mono" font-size="9.5" fill="#14203A" text-anchor="end">55</text>
+      <circle cx="453" cy="138" r="4.5" fill="#8494A8"/>
+      <circle cx="475" cy="68" r="4.5" fill="#8494A8"/>
+      <circle cx="497" cy="110" r="4.5" fill="#8494A8"/>
+      <line x1="435" y1="105.80000000000004" x2="515" y2="105.80000000000004" stroke="#14203A" stroke-width="2.5"/>
+      <text x="475" y="349" font-family="IBM Plex Sans Condensed" font-size="14" font-weight="600" fill="#14203A" text-anchor="middle">push derived</text>
+      <text x="475" y="368" font-family="IBM Plex Mono" font-size="11" fill="#8494A8" text-anchor="middle">57.3 avg</text>
+      <text x="475" y="384" font-family="IBM Plex Mono" font-size="9.5" fill="#B0BCC9" text-anchor="middle">overlaps baseline</text>
+      <rect x="589" y="96" width="80" height="28" rx="4" fill="rgba(20,32,58,.10)" stroke="#B0BCC9" stroke-width="1"/>
+      <text x="583" y="107" font-family="IBM Plex Mono" font-size="9.5" fill="#14203A" text-anchor="end">58</text>
+      <text x="583" y="121" font-family="IBM Plex Mono" font-size="9.5" fill="#14203A" text-anchor="end">56</text>
+      <circle cx="607" cy="124" r="4.5" fill="#8494A8"/>
+      <circle cx="629" cy="110" r="4.5" fill="#8494A8"/>
+      <circle cx="651" cy="96" r="4.5" fill="#8494A8"/>
+      <line x1="589" y1="110.0" x2="669" y2="110.0" stroke="#14203A" stroke-width="2.5"/>
+      <text x="629" y="349" font-family="IBM Plex Sans Condensed" font-size="14" font-weight="600" fill="#14203A" text-anchor="middle">pull</text>
+      <text x="629" y="368" font-family="IBM Plex Mono" font-size="11" fill="#8494A8" text-anchor="middle">57.0 avg</text>
+      <text x="629" y="384" font-family="IBM Plex Mono" font-size="9.5" fill="#B0BCC9" text-anchor="middle">overlaps baseline</text>
+      <rect x="743" y="96" width="80" height="42" rx="4" fill="rgba(20,32,58,.10)" stroke="#B0BCC9" stroke-width="1"/>
+      <text x="737" y="107" font-family="IBM Plex Mono" font-size="9.5" fill="#14203A" text-anchor="end">58</text>
+      <text x="737" y="135" font-family="IBM Plex Mono" font-size="9.5" fill="#14203A" text-anchor="end">55</text>
+      <circle cx="761" cy="96" r="4.5" fill="#8494A8"/>
+      <circle cx="783" cy="138" r="4.5" fill="#8494A8"/>
+      <circle cx="805" cy="124" r="4.5" fill="#8494A8"/>
+      <line x1="743" y1="119.80000000000004" x2="823" y2="119.80000000000004" stroke="#14203A" stroke-width="2.5"/>
+      <text x="783" y="349" font-family="IBM Plex Sans Condensed" font-size="14" font-weight="600" fill="#14203A" text-anchor="middle">pull, prompted</text>
+      <text x="783" y="368" font-family="IBM Plex Mono" font-size="11" fill="#8494A8" text-anchor="middle">56.3 avg</text>
+      <text x="783" y="384" font-family="IBM Plex Mono" font-size="9.5" fill="#B0BCC9" text-anchor="middle">overlaps baseline</text>
+      <text x="475" y="26" font-family="IBM Plex Mono" font-size="10.5" fill="#8494A8" text-anchor="middle">each box is that arm&#39;s own spread across three identical runs</text>
+      <line x1="90" y1="330" x2="860" y2="330" stroke="#D3DAE2" stroke-width="1"/>
+      </svg>
+    <figcaption><b>How to read this page:</b> colour means the result survives run-to-run variance.
+    Each box is the spread of that arm&#39;s own three identical runs. <b>Only the push arm&#39;s box sits
+    clear of the baseline&#39;s</b>, every other arm overlaps it, so its difference from the baseline is
+    not an effect.</figcaption>
+  </figure>
+</section>
+
+<!-- ================= 01 QUESTION ================= -->
+<section id="question">
+  <div class="sec-head"><span class="n">01</span><h2>The question</h2>
+    <p>why an agent explores 152 tables from scratch, every time</p></div>
+
+  <p>A text-to-SQL agent lets a non-technical analyst ask a database a question in plain language.
+  On an enterprise schema it cannot see all the tables at once, so it explores from scratch on every
+  question, <strong>about 21,700 tokens and eight tool calls per query</strong>, repeated forever, for
+  questions it has effectively answered before.</p>
+
+  <p>The obvious fix is memory: store what was learned and reuse it. I have built several versions of
+  this over the past year and none reliably improved accuracy. So this thesis asks the question
+  directly, and separates out one thing prior work never does: <strong>does the failure depend on how
+  the memory reaches the agent?</strong> The closest work, AgentSM (2026), loses ~35 accuracy points
+  without its memory but uses a single fixed delivery mechanism and never varies it.</p>
+
+  <h3 style="margin-top:26px">Research questions</h3>
+  <table style="margin-top:12px">
+    <tr><td style="width:34px;color:var(--ink-dim)">Q1</td>
+        <td>With content held fixed, does the delivery mechanism change accuracy, cost, or how often
+        memory actively harms?</td></tr>
+    <tr><td style="color:var(--ink-dim)">Q2</td>
+        <td>Which step of the chain fails, consultation, retrieval, or utilization?</td></tr>
+    <tr><td style="color:var(--ink-dim)">Q3</td>
+        <td>Does retrieval keyed on <em>observed schema structure</em>, rather than similarity to the
+        question, deliver memory's cost saving without its accuracy loss?</td></tr>
+  </table>
+</section>
+
+<!-- ================= 01b STAKES ================= -->
+<section id="stakes">
+  <div class="sec-head"><span class="n">01b</span><h2>Why this matters</h2>
+    <p>the cost of re-discovering a 152-table schema, every time</p></div>
+
+  <p>On a 152-table financial schema, a text-to-SQL agent explores from scratch on every question.
+  That is <strong>~21,700 tokens and eight tool calls per query</strong>, repeated forever, for questions
+  it has effectively answered before. At the scale of a single mid-size bank, 50 analysts running
+  15 ad-hoc queries a day, that is <strong>5.4 billion tokens a year</strong> spent re-discovering
+  the same table relationships.</p>
+
+  <p>Memory is the obvious fix. Store what was learned, reuse it. And it does cut tokens by 25%.</p>
+
+  <p>The problem: the way memory is currently delivered, pushed straight into the prompt, makes
+  the agent stop exploring. It saves the tokens by trusting what it was told. When that memory is
+  right, it shortcuts to a good answer. When it is not, it commits early and produces a wrong query,
+  one the agent would have gotten right without the memory at all.</p>
+
+</section>
+
+<!-- ================= 03 AGENT ================= -->
+<section id="agent">
+  <div class="sec-head"><span class="n">02</span><h2>The agent</h2>
+    <p>frozen across all five arms, only the memory path moves</p></div>
+
+  <figure>
+    <svg viewBox="0 0 900 330" role="img" aria-label="Agent architecture: memory path, model loop, tools, and output">
+      <defs>
+        <marker id="ar" markerWidth="9" markerHeight="9" refX="8" refY="4.5" orient="auto">
+          <path d="M0,0 L9,4.5 L0,9 z" fill="#8494A8"/>
+        </marker>
+        <marker id="arRed" markerWidth="9" markerHeight="9" refX="8" refY="4.5" orient="auto">
+          <path d="M0,0 L9,4.5 L0,9 z" fill="#C8382E"/>
+        </marker>
+      </defs>
+
+      <!-- memory path -->
+      <rect x="14" y="86" width="176" height="96" rx="8" fill="#fff" stroke="#C8382E" stroke-width="1.6"/>
+      <text x="102" y="112" font-family="IBM Plex Sans Condensed" font-size="14.5" font-weight="600"
+            fill="#C8382E" text-anchor="middle">memory path</text>
+      <text x="102" y="133" font-family="IBM Plex Mono" font-size="10.5" fill="#4A5A72" text-anchor="middle">the only thing</text>
+      <text x="102" y="148" font-family="IBM Plex Mono" font-size="10.5" fill="#4A5A72" text-anchor="middle">that changes</text>
+      <text x="102" y="169" font-family="IBM Plex Mono" font-size="10" fill="#8494A8" text-anchor="middle">top-k · no threshold</text>
+
+      <line x1="192" y1="118" x2="272" y2="118" stroke="#C8382E" stroke-width="1.6" marker-end="url(#arRed)"/>
+      <text x="232" y="110" font-family="IBM Plex Mono" font-size="9.5" fill="#C8382E" text-anchor="middle">push</text>
+      <path d="M190,158 C230,158 240,214 272,214" stroke="#C8382E" stroke-width="1.6" fill="none"
+            stroke-dasharray="4 3" marker-end="url(#arRed)"/>
+      <text x="236" y="196" font-family="IBM Plex Mono" font-size="9.5" fill="#C8382E" text-anchor="middle">pull</text>
+
+      <!-- prompt -->
+      <rect x="274" y="96" width="150" height="46" rx="7" fill="#fff" stroke="#D3DAE2"/>
+      <text x="349" y="124" font-family="IBM Plex Mono" font-size="12" fill="#14203A" text-anchor="middle">prompt</text>
+
+      <!-- model -->
+      <rect x="274" y="160" width="150" height="108" rx="8" fill="#14203A"/>
+      <text x="349" y="196" font-family="IBM Plex Sans Condensed" font-size="16" font-weight="600"
+            fill="#fff" text-anchor="middle">gpt-4o-mini</text>
+      <text x="349" y="218" font-family="IBM Plex Mono" font-size="10.5" fill="#8FA3B8" text-anchor="middle">temperature 0</text>
+      <text x="349" y="242" font-family="IBM Plex Mono" font-size="10.5" fill="#8FA3B8" text-anchor="middle">16-step budget</text>
+      <line x1="349" y1="144" x2="349" y2="158" stroke="#8494A8" stroke-width="1.4" marker-end="url(#ar)"/>
+
+      <!-- tools -->
+      <text x="600" y="76" font-family="IBM Plex Mono" font-size="10.5" fill="#8494A8"
+            letter-spacing="1.6" text-anchor="middle">TOOLS</text>
+      <g>
+        <rect x="500" y="90" width="200" height="40" rx="6" fill="#fff" stroke="#D3DAE2"/>
+        <text x="600" y="115" font-family="IBM Plex Mono" font-size="12" fill="#14203A" text-anchor="middle">list_tables()</text>
+        <rect x="500" y="140" width="200" height="40" rx="6" fill="#fff" stroke="#D3DAE2"/>
+        <text x="600" y="165" font-family="IBM Plex Mono" font-size="12" fill="#14203A" text-anchor="middle">describe_table(t)</text>
+        <rect x="500" y="190" width="200" height="40" rx="6" fill="#fff" stroke="#D3DAE2"/>
+        <text x="600" y="215" font-family="IBM Plex Mono" font-size="12" fill="#14203A" text-anchor="middle">run_sql(q)</text>
+        <rect x="500" y="240" width="200" height="40" rx="6" fill="#fff" stroke="#C8382E" stroke-dasharray="4 3"/>
+        <text x="600" y="265" font-family="IBM Plex Mono" font-size="12" fill="#C8382E" text-anchor="middle">consult_memory(q)</text>
+      </g>
+      <path d="M426,200 C458,200 462,110 498,110" stroke="#8494A8" stroke-width="1.3" fill="none" marker-end="url(#ar)"/>
+      <path d="M426,208 C458,208 462,160 498,160" stroke="#8494A8" stroke-width="1.3" fill="none" marker-end="url(#ar)"/>
+      <path d="M426,216 C458,216 462,210 498,210" stroke="#8494A8" stroke-width="1.3" fill="none" marker-end="url(#ar)"/>
+      <path d="M426,232 C458,232 462,260 498,260" stroke="#C8382E" stroke-width="1.3" fill="none"
+            stroke-dasharray="4 3" marker-end="url(#arRed)"/>
+      <path d="M700,255 C760,255 762,214 700,214" stroke="#8494A8" stroke-width="1.1" fill="none"/>
+      <text x="762" y="186" font-family="IBM Plex Mono" font-size="10" fill="#8494A8" text-anchor="middle">observations</text>
+      <path d="M755,208 C790,208 790,150 426,150" stroke="#8494A8" stroke-width="1.1" fill="none"
+            stroke-dasharray="3 3" marker-end="url(#ar)"/>
+
+      <!-- output -->
+      <rect x="274" y="286" width="150" height="34" rx="6" fill="#fff" stroke="#14203A" stroke-width="1.5"/>
+      <text x="349" y="308" font-family="IBM Plex Mono" font-size="12" font-weight="500"
+            fill="#14203A" text-anchor="middle">predicted SQL</text>
+      <line x1="349" y1="270" x2="349" y2="284" stroke="#14203A" stroke-width="1.4" marker-end="url(#ar)"/>
+    </svg>
+    <figcaption><b>Frozen substrate.</b> Same model, same tools, same 16-step exploration budget in
+    every arm. Memory calls draw on a separate counter, so a pull arm never trades away exploration
+    steps to look something up, which is what makes push and pull comparable at all.</figcaption>
+  </figure>
+</section>
+
+<!-- ================= 04 PIPELINE ================= -->
+<section id="pipeline">
+  <div class="sec-head"><span class="n">03</span><h2>The pipeline</h2>
+    <p>one question, five arms, three probes</p></div>
+
+  <figure>
+    <svg viewBox="0 0 900 300" role="img" aria-label="Pipeline from questions through arms and logs to probes and report">
+      <defs>
+        <marker id="ar2" markerWidth="8" markerHeight="8" refX="7" refY="4" orient="auto">
+          <path d="M0,0 L8,4 L0,8 z" fill="#8494A8"/>
+        </marker>
+      </defs>
+
+      <!-- stage 1 -->
+      <rect x="8" y="112" width="126" height="72" rx="8" fill="#14203A"/>
+      <text x="71" y="140" font-family="IBM Plex Sans Condensed" font-size="15" font-weight="600"
+            fill="#fff" text-anchor="middle">115 questions</text>
+      <text x="71" y="160" font-family="IBM Plex Mono" font-size="10" fill="#8FA3B8" text-anchor="middle">FIBEN · 152 tables</text>
+
+      <line x1="136" y1="148" x2="176" y2="148" stroke="#8494A8" stroke-width="1.3" marker-end="url(#ar2)"/>
+
+      <!-- stage 2 : arms -->
+      <text x="262" y="34" font-family="IBM Plex Mono" font-size="10" fill="#8494A8"
+            letter-spacing="1.6" text-anchor="middle">5 ARMS × 3 RUNS</text>
+      <g font-family="IBM Plex Mono" font-size="11">
+        <rect x="180" y="44" width="164" height="34" rx="6" fill="#fff" stroke="#D3DAE2"/>
+        <text x="262" y="66" fill="#14203A" text-anchor="middle">no memory</text>
+        <rect x="180" y="86" width="164" height="34" rx="6" fill="#fff" stroke="#C8382E"/>
+        <text x="262" y="108" fill="#C8382E" text-anchor="middle">push</text>
+        <rect x="180" y="128" width="164" height="34" rx="6" fill="#fff" stroke="#1F7A6E"/>
+        <text x="262" y="150" fill="#1F7A6E" text-anchor="middle">push join path</text>
+        <rect x="180" y="170" width="164" height="34" rx="6" fill="#fff" stroke="#D3DAE2"/>
+        <text x="262" y="192" fill="#14203A" text-anchor="middle">pull</text>
+        <rect x="180" y="212" width="164" height="34" rx="6" fill="#fff" stroke="#D3DAE2"/>
+        <text x="262" y="234" fill="#14203A" text-anchor="middle">pull, prompted</text>
+      </g>
+
+      <line x1="346" y1="148" x2="386" y2="148" stroke="#8494A8" stroke-width="1.3" marker-end="url(#ar2)"/>
+
+      <!-- stage 3 : logs -->
+      <rect x="390" y="106" width="128" height="84" rx="8" fill="#fff" stroke="#14203A" stroke-width="1.5"/>
+      <text x="454" y="134" font-family="IBM Plex Mono" font-size="11.5" fill="#14203A" text-anchor="middle">episodes</text>
+      <text x="454" y="150" font-family="IBM Plex Mono" font-size="11.5" fill="#14203A" text-anchor="middle">.jsonl</text>
+      <text x="454" y="172" font-family="IBM Plex Mono" font-size="9.5" fill="#8494A8" text-anchor="middle">every step, every item</text>
+
+      <line x1="520" y1="148" x2="560" y2="148" stroke="#8494A8" stroke-width="1.3" marker-end="url(#ar2)"/>
+
+      <!-- stage 4 : probes -->
+      <text x="646" y="60" font-family="IBM Plex Mono" font-size="10" fill="#8494A8"
+            letter-spacing="1.6" text-anchor="middle">PROBES · OFFLINE, NO MODEL CALLS</text>
+      <g font-family="IBM Plex Mono" font-size="11">
+        <rect x="564" y="72" width="164" height="44" rx="6" fill="#fff" stroke="#D3DAE2"/>
+        <text x="646" y="90" fill="#14203A" text-anchor="middle">1 · retrieval</text>
+        <text x="646" y="106" fill="#8494A8" font-size="9.5" text-anchor="middle">was a fix surfaced?</text>
+        <rect x="564" y="124" width="164" height="44" rx="6" fill="#fff" stroke="#D3DAE2"/>
+        <text x="646" y="142" fill="#14203A" text-anchor="middle">2 · use &amp; effect</text>
+        <text x="646" y="158" fill="#8494A8" font-size="9.5" text-anchor="middle">paired vs baseline</text>
+        <rect x="564" y="176" width="164" height="44" rx="6" fill="#fff" stroke="#D3DAE2"/>
+        <text x="646" y="194" fill="#14203A" text-anchor="middle">3 · failure type</text>
+        <text x="646" y="210" fill="#8494A8" font-size="9.5" text-anchor="middle">two axes, crossed</text>
+      </g>
+
+      <line x1="730" y1="148" x2="770" y2="148" stroke="#8494A8" stroke-width="1.3" marker-end="url(#ar2)"/>
+
+      <!-- stage 5 -->
+      <rect x="774" y="106" width="118" height="84" rx="8" fill="#14203A"/>
+      <text x="833" y="136" font-family="IBM Plex Sans Condensed" font-size="14" font-weight="600"
+            fill="#fff" text-anchor="middle">cause ×</text>
+      <text x="833" y="154" font-family="IBM Plex Sans Condensed" font-size="14" font-weight="600"
+            fill="#fff" text-anchor="middle">stage</text>
+      <text x="833" y="174" font-family="IBM Plex Mono" font-size="9.5" fill="#8FA3B8" text-anchor="middle">self-checking</text>
+
+      <text x="454" y="272" font-family="IBM Plex Mono" font-size="10.5" fill="#8494A8" text-anchor="middle">
+        the same 115 questions run under every arm, outcomes are paired, never averaged separately
+      </text>
+    </svg>
+    <figcaption><b>Everything after the log file is deterministic.</b> The probes re-read
+    <span style="font-family:var(--mono)">episodes.jsonl</span> and never call a model, so the whole
+    analysis can be re-derived, which is how two early findings were caught as artifacts of my own
+    measurement code rather than facts about memory.</figcaption>
+  </figure>
+
+  <div class="arms">
+    <div class="row">
+      <div class="nm" style="color:var(--ink)">no memory<i>baseline</i></div>
+      <div class="tx">The agent gets nothing. It lists the 152 tables, describes the ones it guesses
+      are relevant, tries some SQL, and answers. <b>Everything else is measured against this.</b></div>
+    </div>
+    <div class="row">
+      <div class="nm" style="color:var(--signal)">push<i>it doesn't ask</i></div>
+      <div class="tx">Before the agent sees the question, the five memory items most similar to that
+      question are pasted into its prompt. The store holds a one-line summary of every table plus the
+      handful of past questions the agent managed to solve during warm-up.</div>
+    </div>
+    <div class="row">
+      <div class="nm" style="color:var(--safe)">push join path<i>free memory</i></div>
+      <div class="tx">Identical delivery, identical store, <b>plus 791 join routes read straight off
+      the foreign-key graph.</b> Nothing had to be solved to build them; they fall out of the database
+      definition. Adding them is the only difference from push.</div>
+    </div>
+    <div class="row">
+      <div class="nm">pull<i>it has to ask</i></div>
+      <div class="tx">Same store as push join path, but nothing is pasted in the prompt. The agent gets a fourth tool,
+      <span style="font-family:var(--mono);font-size:13px">consult_memory</span>, and memory arrives
+      only if it decides to call it, in its own words, at a moment of its choosing.</div>
+    </div>
+    <div class="row">
+      <div class="nm">pull, prompted<i>one sentence added</i></div>
+      <div class="tx">Exactly the same arm, except the prompt mentions that the memory tool exists.
+      <b>That one sentence is the whole experiment</b>, it isolates how much of "the agent never
+      consults memory" is about the agent and how much is about the instructions.</div>
+    </div>
+  </div>
+</section>
+
+<!-- ================= 05 CLASSIFIER ================= -->
+<section id="classify">
+  <div class="sec-head"><span class="n">04</span><h2>How a wrong answer is classified</h2>
+    <p>two independent axes, deliberately not one priority ladder</p></div>
+
+  <p>Every wrong answer gets two labels. <strong>What the SQL got wrong</strong> is decided by
+  comparing the predicted query against gold. <strong>How far the memory chain got</strong> is
+  computed separately, from the retrieval and reuse logs. The two are then crossed.</p>
+
+  <p>This matters more than it sounds. An earlier version checked SQL causes first and treated the
+  memory stages as whatever was left over, which guaranteed the leftover would be empty, because
+  <em>an ignored join route is also a wrong join</em>. The cell that carries the whole finding in
+  section 08 only exists because the axes are independent.</p>
+
+  <h3 style="margin-bottom:14px">Did memory help, hurt, or do nothing?</h3>
+  <figure>
+    <svg viewBox="0 0 900 400" role="img" aria-label="Control flow for deciding whether memory helped, hurt, or did nothing"><defs><marker id="fa" markerWidth="8" markerHeight="8" refX="7" refY="4" orient="auto"><path d="M0,0 L8,4 L0,8 z" fill="#8494A8"/></marker></defs><rect x="88" y="10" width="184" height="30" rx="15" fill="#14203A"/><text x="180" y="30" font-family="IBM Plex Mono" font-size="11" fill="#fff" text-anchor="middle">one paired question</text><line x1="180" y1="40" x2="180" y2="52" stroke="#8494A8" stroke-width="1.3" marker-end="url(#fa)"/><polygon points="180,55 258,86 180,117 102,86" fill="#fff" stroke="#14203A" stroke-width="1.4"/><text x="180" y="83" font-family="IBM Plex Mono" font-size="9.5" fill="#14203A" text-anchor="middle">pull arm and</text><text x="180" y="96" font-family="IBM Plex Mono" font-size="9.5" fill="#14203A" text-anchor="middle">never asked?</text><line x1="258" y1="86" x2="470" y2="86" stroke="#8494A8" stroke-width="1.3" marker-end="url(#fa)"/><text x="276" y="79" font-family="IBM Plex Mono" font-size="9" fill="#8494A8">yes</text><rect x="474" y="70" width="178" height="32" rx="16" fill="rgba(20,32,58,.05)" stroke="#8494A8" stroke-width="1.2"/><text x="563.0" y="90" font-family="IBM Plex Mono" font-size="11" fill="#8494A8" text-anchor="middle">not_consulted</text><line x1="180" y1="117" x2="180" y2="152" stroke="#8494A8" stroke-width="1.3" marker-end="url(#fa)"/><text x="187" y="143" font-family="IBM Plex Mono" font-size="9" fill="#8494A8">no</text><polygon points="180,155 258,186 180,217 102,186" fill="#fff" stroke="#14203A" stroke-width="1.4"/><text x="180" y="183" font-family="IBM Plex Mono" font-size="9.5" fill="#14203A" text-anchor="middle">baseline wrong,</text><text x="180" y="196" font-family="IBM Plex Mono" font-size="9.5" fill="#14203A" text-anchor="middle">memory right?</text><line x1="258" y1="186" x2="470" y2="186" stroke="#8494A8" stroke-width="1.3" marker-end="url(#fa)"/><text x="276" y="179" font-family="IBM Plex Mono" font-size="9" fill="#8494A8">yes</text><rect x="474" y="170" width="178" height="32" rx="16" fill="rgba(31,122,110,.10)" stroke="#1F7A6E" stroke-width="1.2"/><text x="563.0" y="190" font-family="IBM Plex Mono" font-size="11" fill="#1F7A6E" text-anchor="middle">beneficial</text><line x1="180" y1="217" x2="180" y2="252" stroke="#8494A8" stroke-width="1.3" marker-end="url(#fa)"/><text x="187" y="243" font-family="IBM Plex Mono" font-size="9" fill="#8494A8">no</text><polygon points="180,255 258,286 180,317 102,286" fill="#fff" stroke="#14203A" stroke-width="1.4"/><text x="180" y="283" font-family="IBM Plex Mono" font-size="9.5" fill="#14203A" text-anchor="middle">baseline right,</text><text x="180" y="296" font-family="IBM Plex Mono" font-size="9.5" fill="#14203A" text-anchor="middle">memory wrong?</text><line x1="258" y1="286" x2="470" y2="286" stroke="#8494A8" stroke-width="1.3" marker-end="url(#fa)"/><text x="276" y="279" font-family="IBM Plex Mono" font-size="9" fill="#8494A8">yes</text><rect x="474" y="270" width="178" height="32" rx="16" fill="rgba(200,56,46,.10)" stroke="#C8382E" stroke-width="1.2"/><text x="563.0" y="290" font-family="IBM Plex Mono" font-size="11" fill="#C8382E" text-anchor="middle">harmful</text><line x1="180" y1="317" x2="180" y2="352" stroke="#8494A8" stroke-width="1.3" marker-end="url(#fa)"/><text x="187" y="343" font-family="IBM Plex Mono" font-size="9" fill="#8494A8">no</text><polygon points="180,346 276,372 180,398 84,372" fill="#fff" stroke="#14203A" stroke-width="1.4"/><text x="180" y="369" font-family="IBM Plex Mono" font-size="9.5" fill="#14203A" text-anchor="middle">traces of memory</text><text x="180" y="382" font-family="IBM Plex Mono" font-size="9.5" fill="#14203A" text-anchor="middle">in the SQL?</text><line x1="276" y1="372" x2="470" y2="372" stroke="#8494A8" stroke-width="1.3" marker-end="url(#fa)"/><text x="296" y="365" font-family="IBM Plex Mono" font-size="9" fill="#8494A8">yes</text><rect x="474" y="356" width="178" height="32" rx="16" fill="rgba(20,32,58,.05)" stroke="#8494A8" stroke-width="1.2"/><text x="563.0" y="376" font-family="IBM Plex Mono" font-size="11" fill="#8494A8" text-anchor="middle">used_neutral</text><text x="52" y="365" font-family="IBM Plex Mono" font-size="9" fill="#8494A8">no</text><rect x="696" y="356" width="120" height="32" rx="16" fill="rgba(20,32,58,.05)" stroke="#8494A8" stroke-width="1.2"/><text x="756.0" y="376" font-family="IBM Plex Mono" font-size="11" fill="#8494A8" text-anchor="middle">ignored</text><line x1="656" y1="372" x2="692" y2="372" stroke="#8494A8" stroke-width="1.3" marker-end="url(#fa)"/><path d="M84,372 C40,372 40,410 620,410 L620,388" stroke="#8494A8" stroke-width="1.3" fill="none" marker-end="url(#fa)"/><text x="726" y="344" font-family="IBM Plex Mono" font-size="9.5" fill="#8494A8" text-anchor="middle">same outcome,</text><text x="726" y="332" font-family="IBM Plex Mono" font-size="9.5" fill="#8494A8" text-anchor="middle">no reuse evidence</text><text x="560" y="344" font-family="IBM Plex Mono" font-size="9.5" fill="#8494A8" text-anchor="middle">same outcome</text></svg>
+    <figcaption><b>Every question runs under every arm, so outcomes are paired rather than averaged.</b>
+    The two error labels are asymmetric on purpose: <em>ignored</em> means memory arrived and left no
+    trace; <em>used_neutral</em> means it was demonstrably reused and the answer did not move, which
+    turned out to be the largest bucket by far.</figcaption>
+  </figure>
+
+  <h3 style="margin:34px 0 14px">What went wrong, and how far the memory got</h3>
+  <figure>
+    <svg viewBox="0 0 900 660" role="img" aria-label="Control flow graphs for the mechanical cause and memory stage axes"><defs><marker id="fb" markerWidth="8" markerHeight="8" refX="7" refY="4" orient="auto"><path d="M0,0 L8,4 L0,8 z" fill="#8494A8"/></marker></defs><line x1="450" y1="0" x2="450" y2="660" stroke="#E4E9EE" stroke-width="1"/><text x="16" y="16" font-family="IBM Plex Mono" font-size="10" fill="#8494A8" letter-spacing="1.4">AXIS 1, WHAT THE SQL GOT WRONG</text><text x="466" y="16" font-family="IBM Plex Mono" font-size="10" fill="#8494A8" letter-spacing="1.4">AXIS 2, HOW FAR THE MEMORY CHAIN GOT</text><rect x="46" y="30" width="168" height="28" rx="14" fill="#14203A"/><text x="130" y="49" font-family="IBM Plex Mono" font-size="10.5" fill="#fff" text-anchor="middle">ex_match == false</text><line x1="130" y1="58" x2="130" y2="70" stroke="#8494A8" stroke-width="1.3" marker-end="url(#fb)"/><polygon points="130,74 204,102 130,130 56,102" fill="#fff" stroke="#14203A" stroke-width="1.4"/><text x="130" y="99" font-family="IBM Plex Mono" font-size="9.5" fill="#14203A" text-anchor="middle">predicted SQL</text><text x="130" y="112" font-family="IBM Plex Mono" font-size="9.5" fill="#14203A" text-anchor="middle">empty?</text><line x1="204" y1="102" x2="246" y2="102" stroke="#8494A8" stroke-width="1.3" marker-end="url(#fb)"/><text x="212" y="96" font-family="IBM Plex Mono" font-size="8.5" fill="#8494A8">yes</text><rect x="250" y="86" width="176" height="32" rx="16" fill="rgba(200,56,46,.10)" stroke="#C8382E" stroke-width="1.2"/><text x="338.0" y="106" font-family="IBM Plex Mono" font-size="11" fill="#C8382E" text-anchor="middle">no_final_sql</text><line x1="130" y1="130" x2="130" y2="148" stroke="#8494A8" stroke-width="1.3" marker-end="url(#fb)"/><text x="136" y="146" font-family="IBM Plex Mono" font-size="8.5" fill="#8494A8">no</text><polygon points="130,148 204,176 130,204 56,176" fill="#fff" stroke="#14203A" stroke-width="1.4"/><text x="130" y="173" font-family="IBM Plex Mono" font-size="9.5" fill="#14203A" text-anchor="middle">error: no such</text><text x="130" y="186" font-family="IBM Plex Mono" font-size="9.5" fill="#14203A" text-anchor="middle">table / column?</text><line x1="204" y1="176" x2="246" y2="176" stroke="#8494A8" stroke-width="1.3" marker-end="url(#fb)"/><text x="212" y="170" font-family="IBM Plex Mono" font-size="8.5" fill="#8494A8">yes</text><rect x="250" y="160" width="176" height="32" rx="16" fill="rgba(200,56,46,.10)" stroke="#C8382E" stroke-width="1.2"/><text x="338.0" y="180" font-family="IBM Plex Mono" font-size="11" fill="#C8382E" text-anchor="middle">hallucination</text><line x1="130" y1="204" x2="130" y2="222" stroke="#8494A8" stroke-width="1.3" marker-end="url(#fb)"/><text x="136" y="220" font-family="IBM Plex Mono" font-size="8.5" fill="#8494A8">no</text><polygon points="130,222 204,250 130,278 56,250" fill="#fff" stroke="#14203A" stroke-width="1.4"/><text x="130" y="247" font-family="IBM Plex Mono" font-size="9.5" fill="#14203A" text-anchor="middle">any other</text><text x="130" y="260" font-family="IBM Plex Mono" font-size="9.5" fill="#14203A" text-anchor="middle">execution error?</text><line x1="204" y1="250" x2="246" y2="250" stroke="#8494A8" stroke-width="1.3" marker-end="url(#fb)"/><text x="212" y="244" font-family="IBM Plex Mono" font-size="8.5" fill="#8494A8">yes</text><rect x="250" y="234" width="176" height="32" rx="16" fill="rgba(200,56,46,.10)" stroke="#C8382E" stroke-width="1.2"/><text x="338.0" y="254" font-family="IBM Plex Mono" font-size="11" fill="#C8382E" text-anchor="middle">execution_error</text><line x1="130" y1="278" x2="130" y2="296" stroke="#8494A8" stroke-width="1.3" marker-end="url(#fb)"/><text x="136" y="294" font-family="IBM Plex Mono" font-size="8.5" fill="#8494A8">no</text><polygon points="130,296 204,324 130,352 56,324" fill="#fff" stroke="#14203A" stroke-width="1.4"/><text x="130" y="321" font-family="IBM Plex Mono" font-size="9.5" fill="#14203A" text-anchor="middle">literals differ,</text><text x="130" y="334" font-family="IBM Plex Mono" font-size="9.5" fill="#14203A" text-anchor="middle">same shape?</text><line x1="204" y1="324" x2="246" y2="324" stroke="#8494A8" stroke-width="1.3" marker-end="url(#fb)"/><text x="212" y="318" font-family="IBM Plex Mono" font-size="8.5" fill="#8494A8">yes</text><rect x="250" y="308" width="176" height="32" rx="16" fill="rgba(200,56,46,.10)" stroke="#C8382E" stroke-width="1.2"/><text x="338.0" y="328" font-family="IBM Plex Mono" font-size="11" fill="#C8382E" text-anchor="middle">value_linking</text><line x1="130" y1="352" x2="130" y2="370" stroke="#8494A8" stroke-width="1.3" marker-end="url(#fb)"/><text x="136" y="368" font-family="IBM Plex Mono" font-size="8.5" fill="#8494A8">no</text><polygon points="130,370 204,398 130,426 56,398" fill="#fff" stroke="#14203A" stroke-width="1.4"/><text x="130" y="395" font-family="IBM Plex Mono" font-size="9.5" fill="#14203A" text-anchor="middle">join edges</text><text x="130" y="408" font-family="IBM Plex Mono" font-size="9.5" fill="#14203A" text-anchor="middle">differ?</text><line x1="204" y1="398" x2="246" y2="398" stroke="#8494A8" stroke-width="1.3" marker-end="url(#fb)"/><text x="212" y="392" font-family="IBM Plex Mono" font-size="8.5" fill="#8494A8">yes</text><rect x="250" y="382" width="176" height="32" rx="16" fill="rgba(200,56,46,.10)" stroke="#C8382E" stroke-width="1.2"/><text x="338.0" y="402" font-family="IBM Plex Mono" font-size="11" fill="#C8382E" text-anchor="middle">join_path</text><line x1="130" y1="426" x2="130" y2="444" stroke="#8494A8" stroke-width="1.3" marker-end="url(#fb)"/><text x="136" y="442" font-family="IBM Plex Mono" font-size="8.5" fill="#8494A8">no</text><polygon points="130,444 204,472 130,500 56,472" fill="#fff" stroke="#14203A" stroke-width="1.4"/><text x="130" y="469" font-family="IBM Plex Mono" font-size="9.5" fill="#14203A" text-anchor="middle">output columns</text><text x="130" y="482" font-family="IBM Plex Mono" font-size="9.5" fill="#14203A" text-anchor="middle">differ?</text><line x1="204" y1="472" x2="246" y2="472" stroke="#8494A8" stroke-width="1.3" marker-end="url(#fb)"/><text x="212" y="466" font-family="IBM Plex Mono" font-size="8.5" fill="#8494A8">yes</text><rect x="250" y="456" width="176" height="32" rx="16" fill="rgba(200,56,46,.10)" stroke="#C8382E" stroke-width="1.2"/><text x="338.0" y="476" font-family="IBM Plex Mono" font-size="11" fill="#C8382E" text-anchor="middle">projection</text><line x1="130" y1="500" x2="130" y2="518" stroke="#8494A8" stroke-width="1.3" marker-end="url(#fb)"/><text x="136" y="516" font-family="IBM Plex Mono" font-size="8.5" fill="#8494A8">no</text><polygon points="130,518 204,546 130,574 56,546" fill="#fff" stroke="#14203A" stroke-width="1.4"/><text x="130" y="543" font-family="IBM Plex Mono" font-size="9.5" fill="#14203A" text-anchor="middle">grouping or</text><text x="130" y="556" font-family="IBM Plex Mono" font-size="9.5" fill="#14203A" text-anchor="middle">nesting differ?</text><line x1="204" y1="546" x2="246" y2="546" stroke="#8494A8" stroke-width="1.3" marker-end="url(#fb)"/><text x="212" y="540" font-family="IBM Plex Mono" font-size="8.5" fill="#8494A8">yes</text><rect x="250" y="530" width="176" height="32" rx="16" fill="rgba(200,56,46,.10)" stroke="#C8382E" stroke-width="1.2"/><text x="338.0" y="550" font-family="IBM Plex Mono" font-size="11" fill="#C8382E" text-anchor="middle">semantic · complexity</text><line x1="130" y1="574" x2="130" y2="606" stroke="#8494A8" stroke-width="1.3" marker-end="url(#fb)"/><text x="136" y="600" font-family="IBM Plex Mono" font-size="8.5" fill="#8494A8">no</text><rect x="42" y="608" width="176" height="32" rx="16" fill="rgba(20,32,58,.05)" stroke="#8494A8" stroke-width="1.2"/><text x="130.0" y="628" font-family="IBM Plex Mono" font-size="11" fill="#8494A8" text-anchor="middle">unexplained</text><rect x="496" y="30" width="168" height="28" rx="14" fill="#14203A"/><text x="580" y="49" font-family="IBM Plex Mono" font-size="10.5" fill="#fff" text-anchor="middle">any episode</text><line x1="580" y1="58" x2="580" y2="70" stroke="#8494A8" stroke-width="1.3" marker-end="url(#fb)"/><polygon points="580,74 654,102 580,130 506,102" fill="#fff" stroke="#14203A" stroke-width="1.4"/><text x="580" y="99" font-family="IBM Plex Mono" font-size="9.5" fill="#14203A" text-anchor="middle">arm has</text><text x="580" y="112" font-family="IBM Plex Mono" font-size="9.5" fill="#14203A" text-anchor="middle">no memory?</text><line x1="654" y1="102" x2="696" y2="102" stroke="#8494A8" stroke-width="1.3" marker-end="url(#fb)"/><text x="662" y="96" font-family="IBM Plex Mono" font-size="8.5" fill="#8494A8">yes</text><rect x="700" y="86" width="186" height="32" rx="16" fill="rgba(20,32,58,.05)" stroke="#8494A8" stroke-width="1.2"/><text x="793.0" y="106" font-family="IBM Plex Mono" font-size="11" fill="#8494A8" text-anchor="middle">no_memory_arm</text><line x1="580" y1="130" x2="580" y2="148" stroke="#8494A8" stroke-width="1.3" marker-end="url(#fb)"/><text x="586" y="146" font-family="IBM Plex Mono" font-size="8.5" fill="#8494A8">no</text><polygon points="580,148 654,176 580,204 506,176" fill="#fff" stroke="#14203A" stroke-width="1.4"/><text x="580" y="173" font-family="IBM Plex Mono" font-size="9.5" fill="#14203A" text-anchor="middle">pull arm and</text><text x="580" y="186" font-family="IBM Plex Mono" font-size="9.5" fill="#14203A" text-anchor="middle">never asked?</text><line x1="654" y1="176" x2="696" y2="176" stroke="#8494A8" stroke-width="1.3" marker-end="url(#fb)"/><text x="662" y="170" font-family="IBM Plex Mono" font-size="8.5" fill="#8494A8">yes</text><rect x="700" y="160" width="186" height="32" rx="16" fill="rgba(20,32,58,.05)" stroke="#8494A8" stroke-width="1.2"/><text x="793.0" y="180" font-family="IBM Plex Mono" font-size="11" fill="#8494A8" text-anchor="middle">not_consulted</text><line x1="580" y1="204" x2="580" y2="222" stroke="#8494A8" stroke-width="1.3" marker-end="url(#fb)"/><text x="586" y="220" font-family="IBM Plex Mono" font-size="8.5" fill="#8494A8">no</text><polygon points="580,222 654,250 580,278 506,250" fill="#fff" stroke="#14203A" stroke-width="1.4"/><text x="580" y="247" font-family="IBM Plex Mono" font-size="9.5" fill="#14203A" text-anchor="middle">store holds</text><text x="580" y="260" font-family="IBM Plex Mono" font-size="9.5" fill="#14203A" text-anchor="middle">no fix?</text><line x1="654" y1="250" x2="696" y2="250" stroke="#8494A8" stroke-width="1.3" marker-end="url(#fb)"/><text x="662" y="244" font-family="IBM Plex Mono" font-size="8.5" fill="#8494A8">yes</text><rect x="700" y="234" width="186" height="32" rx="16" fill="rgba(20,32,58,.05)" stroke="#8494A8" stroke-width="1.2"/><text x="793.0" y="254" font-family="IBM Plex Mono" font-size="11" fill="#8494A8" text-anchor="middle">no_relevant_in_store</text><line x1="580" y1="278" x2="580" y2="296" stroke="#8494A8" stroke-width="1.3" marker-end="url(#fb)"/><text x="586" y="294" font-family="IBM Plex Mono" font-size="8.5" fill="#8494A8">no</text><polygon points="580,296 654,324 580,352 506,324" fill="#fff" stroke="#14203A" stroke-width="1.4"/><text x="580" y="321" font-family="IBM Plex Mono" font-size="9.5" fill="#14203A" text-anchor="middle">fix exists but</text><text x="580" y="334" font-family="IBM Plex Mono" font-size="9.5" fill="#14203A" text-anchor="middle">not in top-k?</text><line x1="654" y1="324" x2="696" y2="324" stroke="#8494A8" stroke-width="1.3" marker-end="url(#fb)"/><text x="662" y="318" font-family="IBM Plex Mono" font-size="8.5" fill="#8494A8">yes</text><rect x="700" y="308" width="186" height="32" rx="16" fill="rgba(20,32,58,.05)" stroke="#8494A8" stroke-width="1.2"/><text x="793.0" y="328" font-family="IBM Plex Mono" font-size="11" fill="#8494A8" text-anchor="middle">not_surfaced</text><line x1="580" y1="352" x2="580" y2="370" stroke="#8494A8" stroke-width="1.3" marker-end="url(#fb)"/><text x="586" y="368" font-family="IBM Plex Mono" font-size="8.5" fill="#8494A8">no</text><polygon points="580,370 654,398 580,426 506,398" fill="#fff" stroke="#14203A" stroke-width="1.4"/><text x="580" y="395" font-family="IBM Plex Mono" font-size="9.5" fill="#14203A" text-anchor="middle">no traces</text><text x="580" y="408" font-family="IBM Plex Mono" font-size="9.5" fill="#14203A" text-anchor="middle">in the SQL?</text><line x1="654" y1="398" x2="696" y2="398" stroke="#8494A8" stroke-width="1.3" marker-end="url(#fb)"/><text x="662" y="392" font-family="IBM Plex Mono" font-size="8.5" fill="#8494A8">yes</text><rect x="700" y="382" width="186" height="32" rx="16" fill="rgba(20,32,58,.05)" stroke="#8494A8" stroke-width="1.2"/><text x="793.0" y="402" font-family="IBM Plex Mono" font-size="11" fill="#8494A8" text-anchor="middle">surfaced_not_used</text><line x1="580" y1="426" x2="580" y2="458" stroke="#8494A8" stroke-width="1.3" marker-end="url(#fb)"/><text x="586" y="452" font-family="IBM Plex Mono" font-size="8.5" fill="#8494A8">no</text><rect x="492" y="460" width="186" height="32" rx="16" fill="rgba(200,56,46,.10)" stroke="#C8382E" stroke-width="1.2"/><text x="585.0" y="480" font-family="IBM Plex Mono" font-size="11" fill="#C8382E" text-anchor="middle">surfaced_used</text></svg>
+    <figcaption><b>Executability is checked before anything else.</b> In the pilot version it wasn't,
+    so an empty answer or a syntax error was scored as a join failure, which is how "most mistakes are
+    wrong joins" became a finding that wasn't true. <b>The two graphs never consult each other</b>, so
+    neither label can absorb the other.</figcaption>
+  </figure>
+
+  <h3 style="margin-top:34px">The three classifiers, in full</h3>
+  <div class="code"><span class="c"># probe 2, did memory change the answer? runs on every paired question,</span>
+<span class="c"># correct ones included, so the funnel is not only a story about failures.</span>
+<span class="k">def</span> classify_outcome(baseline, memory_arm):
+    <span class="k">if</span> memory_arm.is_pull <span class="k">and</span> <span class="k">not</span> memory_arm.memory_calls:
+        <span class="k">return</span> <span class="s">"not_consulted"</span>      <span class="c"># never asked, nothing to attribute</span>
+
+    <span class="k">if</span> <span class="k">not</span> baseline.ex_match <span class="k">and</span> memory_arm.ex_match:
+        <span class="k">return</span> <span class="s">"beneficial"</span>         <span class="c"># memory fixed a question the baseline missed</span>
+    <span class="k">if</span> baseline.ex_match <span class="k">and</span> <span class="k">not</span> memory_arm.ex_match:
+        <span class="k">return</span> <span class="s">"harmful"</span>            <span class="c"># memory broke a question the baseline got right</span>
+
+    <span class="c"># same outcome either way, did memory touch the answer at all?</span>
+    <span class="k">return</span> <span class="s">"used_neutral"</span> <span class="k">if</span> reuse_evidence(memory_arm) <span class="k">else</span> <span class="s">"ignored"</span>
+
+<span class="c"># invariants the report asserts before it will print:</span>
+<span class="c">#   beneficial ⊆ questions the baseline got wrong</span>
+<span class="c">#   harmful    ⊆ questions the memory arm got wrong</span>
+<span class="c">#   the five labels partition the paired set exactly</span>
+
+
+<span class="c"># axis 1, what the SQL got wrong</span>
+<span class="k">def</span> classify_mechanical(record, catalog):
+    <span class="k">if</span> is_blank(record.predicted_sql):
+        <span class="k">return</span> <span class="s">"no_final_sql"</span>          <span class="c"># the model answered in prose, or not at all</span>
+    <span class="k">if</span> record.predicted_error:
+        <span class="k">if</span> <span class="s">"no such table"</span> <span class="k">in</span> err <span class="k">or</span> <span class="s">"no such column"</span> <span class="k">in</span> err:
+            <span class="k">return</span> <span class="s">"hallucination"</span>
+        <span class="k">return</span> <span class="s">"execution_error"</span>       <span class="c"># syntax, ambiguity, type errors</span>
+
+    <span class="c"># it ran. compare against gold, fixed order, first match wins.</span>
+    gold, pred = parse(record.gold_sql, catalog), parse(record.predicted_sql, catalog)
+
+    <span class="k">if</span> gold.tables == pred.tables <span class="k">and</span> gold.where_cols == pred.where_cols \
+                                  <span class="k">and</span> gold.literals != pred.literals:
+        <span class="k">return</span> <span class="s">"value_linking"</span>        <span class="c"># right shape, wrong constant (strings AND numbers)</span>
+
+    <span class="k">if</span> len(gold.tables) &gt;= 2 <span class="k">and</span> gold.join_edges != pred.join_edges:
+        <span class="k">return</span> <span class="s">"join_path"</span>            <span class="c"># USING(...) and NATURAL JOIN resolved to explicit edges first</span>
+
+    <span class="k">if</span> result_width(gold) != result_width(pred):
+        <span class="k">return</span> <span class="s">"projection"</span>           <span class="c"># right rows, wrong columns</span>
+
+    <span class="k">if</span> gold.group_by != pred.group_by <span class="k">or</span> gold.aggregates != pred.aggregates:
+        <span class="k">return</span> <span class="s">"semantic"</span>
+    <span class="k">if</span> nesting_depth(gold) &gt; nesting_depth(pred):
+        <span class="k">return</span> <span class="s">"query_complexity"</span>
+
+    <span class="k">return</span> <span class="s">"unexplained"</span>
+
+<span class="c"># axis 2, computed independently, from the retrieval and reuse logs</span>
+<span class="k">def</span> classify_stage(record, probe1, probe2):
+    <span class="k">if</span> <span class="k">not</span> record.arm.has_memory:      <span class="k">return</span> <span class="s">"no_memory_arm"</span>
+    <span class="k">if</span> record.arm.is_pull <span class="k">and</span> <span class="k">not</span> record.memory_calls:
+                                        <span class="k">return</span> <span class="s">"not_consulted"</span>
+    <span class="k">if</span> <span class="k">not</span> probe1.coverage_exists:   <span class="k">return</span> <span class="s">"no_relevant_in_store"</span>
+    <span class="k">if</span> <span class="k">not</span> probe1.recall_at_k:      <span class="k">return</span> <span class="s">"not_surfaced"</span>
+    <span class="k">if</span> <span class="k">not</span> probe2.reuse_evidence:   <span class="k">return</span> <span class="s">"surfaced_not_used"</span>
+    <span class="k">return</span> <span class="s">"surfaced_used"</span>
+
+<span class="c"># the report crosses them. neither axis can absorb the other.</span></div>
+
+  
+</section>
+
+<!-- ================= 05 HARM ================= -->
+<section id="harm">
+  <div class="sec-head"><span class="n">05</span><h2>Pushed memory makes the agent worse</h2>
+    <p>the one effect that survives the noise floor</p></div>
+
+  <div class="stats">
+    <div class="stat"><div class="v dim">55.7</div><div class="l">baseline avg correct</div></div>
+    <div class="stat"><div class="v sig">47.7</div><div class="l">push avg correct</div></div>
+    <div class="stat"><div class="v sig">8 / 32</div><div class="l">answers fixed / broken</div></div>
+    <div class="stat"><div class="v dim">3 / 3</div><div class="l">runs in the same direction</div></div>
+  </div>
+
+  <figure>
+    <table>
+      <tr><th>run</th><th class="num">baseline</th><th class="num">push</th>
+          <th class="num">fixed</th><th class="num">broken</th><th class="num">McNemar p</th></tr>
+      <tr><td>1</td><td class="num">57</td><td class="num sig">48</td>
+          <td class="num">1</td><td class="num sig">10</td><td class="num sig">0.012</td></tr>
+      <tr><td>2</td><td class="num">54</td><td class="num sig">50</td>
+          <td class="num">5</td><td class="num sig">9</td><td class="num dim">0.424</td></tr>
+      <tr><td>3</td><td class="num">56</td><td class="num sig">45</td>
+          <td class="num">2</td><td class="num sig">13</td><td class="num sig">0.007</td></tr>
+    </table>
+    <figcaption>Nothing was filtered out. Retrieval is plain top-k with <b>no relevance threshold</b>,
+    so the agent received the five most similar items in the store, and they hurt.</figcaption>
+  </figure>
+</section>
+
+<!-- ================= 06 EXPLORE ================= -->
+<section id="explore">
+  <div class="sec-head"><span class="n">06</span><h2>Why: the agent stops looking</h2>
+    <p>the mechanism, and the reason the harm is interesting rather than embarrassing</p></div>
+
+  <figure>
+    <div class="legend">
+      <span><i class="sw" style="background:#8494A8"></i>no memory</span>
+      <span><i class="sw" style="background:#C8382E"></i>push</span>
+    </div>
+    <svg viewBox="0 0 900 306" role="img" aria-label="Distribution of exploration steps per episode, baseline versus push">
+      <g stroke="#E4E9EE" stroke-width="1">
+        <line x1="70" y1="270" x2="880" y2="270"/>
+        <line x1="70" y1="198" x2="880" y2="198"/>
+        <line x1="70" y1="126" x2="880" y2="126"/>
+        <line x1="70" y1="54"  x2="880" y2="54"/>
+      </g>
+      <g font-family="IBM Plex Mono" font-size="10.5" fill="#8494A8" text-anchor="end">
+        <text x="58" y="274">0</text><text x="58" y="202">20</text>
+        <text x="58" y="130">40</text><text x="58" y="58">60</text>
+      </g>
+      <text x="26" y="162" font-family="IBM Plex Mono" font-size="10.5" fill="#8494A8"
+            transform="rotate(-90 26 162)" text-anchor="middle">episodes</text>
+
+      <!-- buckets: 2-4 / 5-6 / 7-9 / 10-12 / 13-15 / 16+ -->
+      <!-- nm 46 22 12 6 11 18   ao 61 25 11 4 3 11   scale 3.6px per episode -->
+      <g>
+        <rect x="90"  y="104.4" width="48" height="165.6" fill="#8494A8"/>
+        <rect x="142" y="50.4"  width="48" height="219.6" fill="#C8382E"/>
+        <text x="140" y="290" font-family="IBM Plex Mono" font-size="11" fill="#4A5A72" text-anchor="middle">2–4</text>
+
+        <rect x="222" y="190.8" width="48" height="79.2" fill="#8494A8"/>
+        <rect x="274" y="180"   width="48" height="90"   fill="#C8382E"/>
+        <text x="272" y="290" font-family="IBM Plex Mono" font-size="11" fill="#4A5A72" text-anchor="middle">5–6</text>
+
+        <rect x="354" y="226.8" width="48" height="43.2" fill="#8494A8"/>
+        <rect x="406" y="230.4" width="48" height="39.6" fill="#C8382E"/>
+        <text x="404" y="290" font-family="IBM Plex Mono" font-size="11" fill="#4A5A72" text-anchor="middle">7–9</text>
+
+        <rect x="486" y="248.4" width="48" height="21.6" fill="#8494A8"/>
+        <rect x="538" y="255.6" width="48" height="14.4" fill="#C8382E"/>
+        <text x="536" y="290" font-family="IBM Plex Mono" font-size="11" fill="#4A5A72" text-anchor="middle">10–12</text>
+
+        <rect x="618" y="230.4" width="48" height="39.6" fill="#8494A8"/>
+        <rect x="670" y="259.2" width="48" height="10.8" fill="#C8382E"/>
+        <text x="668" y="290" font-family="IBM Plex Mono" font-size="11" fill="#4A5A72" text-anchor="middle">13–15</text>
+
+        <rect x="750" y="205.2" width="48" height="64.8" fill="#8494A8"/>
+        <rect x="802" y="230.4" width="48" height="39.6" fill="#C8382E"/>
+        <text x="800" y="290" font-family="IBM Plex Mono" font-size="11" fill="#4A5A72" text-anchor="middle">16 (cap)</text>
+      </g>
+
+      <text x="166" y="40" font-family="IBM Plex Mono" font-size="10.5" fill="#C8382E">+15 episodes give up at ≤4 steps</text>
+      <text x="774" y="196" font-family="IBM Plex Mono" font-size="10.5" fill="#8494A8" text-anchor="middle">−7 reach the cap</text>
+      <line x1="70" y1="270" x2="880" y2="270" stroke="#D3DAE2"/>
+      <text x="475" y="306" font-family="IBM Plex Mono" font-size="10.5" fill="#8494A8" text-anchor="middle">exploration steps per episode</text>
+    </svg>
+    <figcaption>Median steps drop from <b>6 to 4</b>. Tokens fall from <b>21,716 to 16,381 (−25%)</b>.
+    The agent isn't working harder with memory, it is working less.</figcaption>
+  </figure>
+
+  <div class="callout">
+    <span class="k">the diagnostic</span>
+    <p><strong>With memory, correct answers take 5.0 steps and wrong ones take 7.0. Without memory
+    there is no relationship at all, 7.8 and 7.9.</strong></p>
+    <p>Memory doesn't hurt by being ignored. It makes the agent stop looking. When the injected items
+    happen to be right it shortcuts to a good answer; when they aren't, it commits early and then
+    flounders. The 25% token saving and the 8-point accuracy loss are one phenomenon measured twice.</p>
+  </div>
+</section>
+
+<!-- ================= 07 CHAIN ================= -->
+<section id="chain">
+  <div class="sec-head"><span class="n">07</span><h2>The agent takes the advice and gets it wrong anyway</h2>
+    <p>memory arrives, gets used, and the answer still fails</p></div>
+
+  <p>In the push arm, 44 questions ended with the tables joined incorrectly. <strong>In 27 of them the
+  correct join was sitting in the prompt, and traces of it appear in the SQL the agent wrote.</strong>
+  Only 5 had memory that went unread, and of those, just 2 held something that would actually have
+  helped.</p>
+
+  <p>So the memory is not being missed. It is being read and followed, and the answer comes out wrong
+  regardless.</p>
+
+  <p>That rules out all three of the failure modes I wrote down before running anything, each of which
+  had its own planned fix. <em>The agent never asks</em>, it does, once the prompt names the tool
+  (~6 → ~19 of 115). <em>The wrong items come back</em>, relevant ones arrive 88% of the time.
+  <em>The right items are ignored</em>, they are visibly reused. The problem is downstream of all
+  three: the content is followed, and following it does not produce a correct query.</p>
+
+  <figure>
+    <svg viewBox="0 0 900 250" role="img" aria-label="Cross-tabulation of SQL failure cause against memory chain stage">
+      <text x="286" y="26" font-family="IBM Plex Mono" font-size="10.5" fill="#8494A8" letter-spacing="1.4">NOT SURFACED</text>
+      <text x="470" y="26" font-family="IBM Plex Mono" font-size="10.5" fill="#8494A8" letter-spacing="1.4">SURFACED, UNUSED</text>
+      <text x="700" y="26" font-family="IBM Plex Mono" font-size="10.5" fill="#C8382E" letter-spacing="1.4">SURFACED AND USED</text>
+
+      <!-- row 1 -->
+      <text x="264" y="76" font-family="IBM Plex Sans Condensed" font-size="15" font-weight="600"
+            fill="#14203A" text-anchor="end">wrong join</text>
+      <rect x="286" y="44" width="160" height="48" rx="5" fill="rgba(20,32,58,.14)"/>
+      <text x="366" y="76" font-family="IBM Plex Mono" font-size="17" fill="#14203A" text-anchor="middle">12</text>
+      <rect x="456" y="44" width="160" height="48" rx="5" fill="rgba(20,32,58,.07)"/>
+      <text x="536" y="76" font-family="IBM Plex Mono" font-size="17" fill="#4A5A72" text-anchor="middle">5</text>
+      <rect x="626" y="44" width="240" height="48" rx="5" fill="#C8382E"/>
+      <text x="746" y="76" font-family="IBM Plex Mono" font-size="19" font-weight="600" fill="#fff" text-anchor="middle">27</text>
+
+      <!-- row 2 -->
+      <text x="264" y="134" font-family="IBM Plex Sans Condensed" font-size="15" font-weight="600"
+            fill="#14203A" text-anchor="end">wrong output shape</text>
+      <rect x="286" y="102" width="160" height="48" rx="5" fill="rgba(20,32,58,.04)"/>
+      <text x="366" y="134" font-family="IBM Plex Mono" font-size="17" fill="#8494A8" text-anchor="middle">1</text>
+      <rect x="456" y="102" width="160" height="48" rx="5" fill="rgba(20,32,58,.04)"/>
+      <text x="536" y="134" font-family="IBM Plex Mono" font-size="17" fill="#8494A8" text-anchor="middle">1</text>
+      <rect x="626" y="102" width="240" height="48" rx="5" fill="rgba(200,56,46,.55)"/>
+      <text x="746" y="134" font-family="IBM Plex Mono" font-size="17" fill="#fff" text-anchor="middle">16</text>
+
+      <!-- row 3 -->
+      <text x="264" y="192" font-family="IBM Plex Sans Condensed" font-size="15" font-weight="600"
+            fill="#14203A" text-anchor="end">everything else</text>
+      <rect x="286" y="160" width="160" height="48" rx="5" fill="rgba(20,32,58,.03)"/>
+      <text x="366" y="192" font-family="IBM Plex Mono" font-size="17" fill="#B0BCC9" text-anchor="middle">0</text>
+      <rect x="456" y="160" width="160" height="48" rx="5" fill="rgba(20,32,58,.03)"/>
+      <text x="536" y="192" font-family="IBM Plex Mono" font-size="17" fill="#B0BCC9" text-anchor="middle">0</text>
+      <rect x="626" y="160" width="240" height="48" rx="5" fill="rgba(200,56,46,.28)"/>
+      <text x="746" y="192" font-family="IBM Plex Mono" font-size="17" fill="#14203A" text-anchor="middle">8</text>
+
+      <text x="286" y="238" font-family="IBM Plex Mono" font-size="10.5" fill="#8494A8">
+        70 wrong answers in the push arm · only 2 are genuine cases of useful memory being ignored
+      </text>
+    </svg>
+    <figcaption><b>Of 44 wrong joins, 27 had the correct join sitting in the prompt with traces of it
+    in the agent's own SQL.</b> The agent takes the advice and gets the answer wrong anyway, which is
+    a fourth outcome, outside the three I pre-registered.</figcaption>
+  </figure>
+</section>
+
+<!-- ================= 08 ORIGIN ================= -->
+<section id="origin">
+  <div class="sec-head"><span class="n">08</span><h2>What matters is where the memory came from</h2>
+    <p>same delivery, same budget, same top-k, only the store differs</p></div>
+
+  <div class="stats">
+    <div class="stat"><div class="v sig">−25%</div><div class="l">tokens, push · −8 accuracy</div></div>
+    <div class="stat"><div class="v safe">−23%</div><div class="l">tokens, derived · no loss</div></div>
+    <div class="stat"><div class="v dim">791</div><div class="l">join routes, built for free</div></div>
+    <div class="stat"><div class="v dim">0</div><div class="l">solved questions needed</div></div>
+  </div>
+
+  <div class="callout safe">
+    <span class="k">provenance decides safety</span>
+    <p>Join routes read straight off the foreign-key graph cost nothing to build and are checkable
+    against the database. They buy almost the same token saving as similarity-retrieved memory,
+    <strong>without the accuracy loss</strong>. Everything else about the arm is identical to push,
+    the delivery, the budget, the top-k. Only the contents of the store change.</p>
+    <p>That is the finding Act 2 builds on: memory verifiable against the schema can be injected
+    freely; memory retrieved by resemblance to the question cannot.</p>
+  </div>
+</section>
+
+<!-- ================= 10 EPISODE ================= -->
+<section id="episode">
+  <div class="sec-head"><span class="n">09</span><h2>One question, five arms</h2>
+    <p>question_id 1, the audited example from run 3</p></div>
+
+  <p><em>"show me revenues for Alphabet?"</em> sounds easy. The correct answer is a five-table join
+  from <span style="font-family:var(--mono)">REVENUE</span> through two link tables and a financial
+  report to <span style="font-family:var(--mono)">CORPORATION</span>, filtered on a legal name that
+  says <span style="font-family:var(--mono)">'Alphabet Inc.'</span> rather than "Alphabet".</p>
+
+  <div class="two-col">
+    <div>
+      <h3>Gold SQL</h3>
+      <div class="code" style="font-size:11px;line-height:1.7">SELECT ElementOfFinancialStatement1."HASMETRICYEARFISCAL",
+       ElementOfFinancialStatement1."HASMETRICVALUE"
+FROM "REVENUE" oRevenue
+INNER JOIN "ELEMENTOFFINANCIALSTATEMENT" e1
+        ON oRevenue."REVENUEID" = e1."ELEMENTOFFINANCIALSTATEMENTID"
+INNER JOIN "ELEMENTSOFFINANCIALREPORT" r1
+        ON e1."ELEMENTOFFINANCIALSTATEMENTID" = r1."ELEMENTSOFFINANCIALREPORTID"
+INNER JOIN "FINANCIALREPORT" f1
+        ON r1."ISMEMBEROF" = f1."FINANCIALREPORTID"
+INNER JOIN "CORPORATION" oCorporation
+        ON f1."ISPROVIDEDBY" = oCorporation."CORPORATIONID"
+WHERE oCorporation."HASLEGALNAME" = 'Alphabet Inc.'
+  AND e1."APPLICABLEPERIOD" = 'yearly'
+  AND e1."HASMETRICYEARFISCAL" BETWEEN '2015' AND '2019' </div>
+    </div>
+    <div>
+      <h3>What the push arm answered, after four steps</h3>
+      <div class="code" style="font-size:11px;line-height:1.7"><span class="r">SELECT * FROM REVENUE
+WHERE HASNAME LIKE '%Alphabet%'</span></div>
+      <p style="font-size:14.5px">No joins, a column that does not exist on that table, and a
+      substring match instead of the exact legal name. The baseline spent 14 steps on the same
+      question. The push arm read its memory and stopped at 4.</p>
+    </div>
+  </div>
+
+  <div class="tabs" role="tablist" style="margin-top:24px">
+    <button class="tab2" role="tab" aria-selected="false" data-ep="nm">no memory</button>
+    <button class="tab2" role="tab" aria-selected="true" data-ep="push">push</button>
+    <button class="tab2" role="tab" aria-selected="false" data-ep="der">push join path</button>
+    <button class="tab2" role="tab" aria-selected="false" data-ep="pull">pull</button>
+    <button class="tab2" role="tab" aria-selected="false" data-ep="pp">pull, prompted</button>
+  </div>
+
+  <div class="eppanel" id="e-nm">
+    <div class="jsonbox">
+      <div class="hd"><b>runs/no_memory_…/episodes.jsonl</b><span>question_id 1 · abbr.</span></div>
+      <pre>{
+  <span class="k">"question_id"</span>: 1,
+  <span class="k">"arm"</span>: <span class="s">"no_memory"</span>,
+  <span class="k">"question"</span>: <span class="s">"show me revenues for Alphabet?"</span>,
+  <span class="k">"predicted_sql"</span>: <span class="s">"SELECT HASMETRICVALUE FROM ELEMENTOFFINANCIALSTATEMENT WHERE HASMETRICVALUE IS NOT NULL AND HASMETRICCONTEXTDIMENSIONS LIKE '%GOOG%'"</span>,
+  <span class="k">"ex_match"</span>: <span class="r">false</span>,
+  <span class="k">"stop_reason"</span>: <span class="s">"final_answer"</span>,
+  <span class="k">"cost"</span>: { <span class="k">"exploration_steps"</span>: 14, <span class="k">"policy_steps"</span>: 0 },
+  <span class="k">"classification"</span>: {
+    <span class="k">"mechanical_cause"</span>: <span class="s">"join_path"</span>,
+    <span class="k">"memory_stage"</span>:     <span class="s">"no_memory_arm"</span>
+  }
+}</pre>
+      <div class="verdict">
+        <div><span>exploration steps</span><b class="">14</b></div>
+        <div><span>outcome</span><b class="r">wrong</b></div>
+        <div><span>classification</span><b>no memory in context</b></div>
+        <div><span>note</span><b>baseline explored hardest and still missed</b></div>
+      </div>
+    </div>
+  </div>
+  <div class="eppanel on" id="e-push">
+    <div class="jsonbox">
+      <div class="hd"><b>runs/always_on_memory_…/episodes.jsonl</b><span>question_id 1 · abbr.</span></div>
+      <pre>{
+  <span class="k">"question_id"</span>: 1,
+  <span class="k">"arm"</span>: <span class="s">"always_on_memory"</span>,
+  <span class="k">"question"</span>: <span class="s">"show me revenues for Alphabet?"</span>,
+  <span class="k">"predicted_sql"</span>: <span class="s">"SELECT * FROM REVENUE WHERE HASNAME LIKE '%Alphabet%'"</span>,
+  <span class="k">"ex_match"</span>: <span class="r">false</span>,
+  <span class="k">"stop_reason"</span>: <span class="s">"final_answer"</span>,
+  <span class="k">"cost"</span>: { <span class="k">"exploration_steps"</span>: 4, <span class="k">"policy_steps"</span>: 0 },
+  <span class="k">"injected_items"</span>: [
+    <span class="s">"traj:120"</span>, <span class="s">"schema:REVENUE"</span>, <span class="s">"schema:CORPORATION"</span>,
+    <span class="s">"schema:FINANCIALREPORT"</span>, <span class="s">"schema:MONETARYAMOUNT"</span>
+  ],
+  <span class="k">"probe1"</span>: {{ <span class="k">"coverage_exists"</span>: true, <span class="k">"recall_at_k"</span>: true,
+              <span class="k">"matched_on"</span>: <span class="s">"traj:120 contains gold literal '2019'"</span> }},
+  <span class="k">"classification"</span>: {
+    <span class="k">"mechanical_cause"</span>: <span class="s">"join_path"</span>,
+    <span class="k">"memory_stage"</span>:     <span class="s">"surfaced_not_used"</span>
+  }
+}</pre>
+      <div class="verdict">
+        <div><span>exploration steps</span><b class="r">4</b></div>
+        <div><span>outcome</span><b class="r">wrong</b></div>
+        <div><span>classification</span><b>join_path × surfaced_not_used</b></div>
+        <div><span>note</span><b>one of only 2 genuine utilization failures</b></div>
+      </div>
+    </div>
+  </div>
+  <div class="eppanel" id="e-der">
+    <div class="jsonbox">
+      <div class="hd"><b>runs/derived_joinpath_memory_…/episodes.jsonl</b><span>question_id 1 · abbr.</span></div>
+      <pre>{
+  <span class="k">"question_id"</span>: 1,
+  <span class="k">"arm"</span>: <span class="s">"derived_joinpath_memory"</span>,
+  <span class="k">"question"</span>: <span class="s">"show me revenues for Alphabet?"</span>,
+  <span class="k">"predicted_sql"</span>: <span class="s">"SELECT r.HASNAME, e.HASMETRICVALUE FROM REVENUE r JOIN ELEMENTOFFINANCIALSTATEMENT e ON r.REVENUEID = e.ELEMENTOFFINANCIALSTATEMENTID JOIN ELEMENTSOFFINANCIALREPORT ef ON e.ELEMENTOFFINANCIALSTATEMENTID = ef.ELEMENTSOFFINANCIALREPORTID WHERE ef.ISMEMBEROF IN (SELECT FINANCIALREPORTID FROM FINANCIALREPORT WHERE HASNAME = 'Alphabet')"</span>,
+  <span class="k">"ex_match"</span>: <span class="r">false</span>,
+  <span class="k">"stop_reason"</span>: <span class="s">"final_answer"</span>,
+  <span class="k">"cost"</span>: { <span class="k">"exploration_steps"</span>: 6, <span class="k">"policy_steps"</span>: 0 },
+  <span class="k">"classification"</span>: {
+    <span class="k">"mechanical_cause"</span>: <span class="s">"join_path"</span>,
+    <span class="k">"memory_stage"</span>:     <span class="s">"surfaced_used"</span>
+  }
+}</pre>
+      <div class="verdict">
+        <div><span>exploration steps</span><b class="">6</b></div>
+        <div><span>outcome</span><b class="r">wrong</b></div>
+        <div><span>classification</span><b>join_path × surfaced_used</b></div>
+        <div><span>note</span><b>routes were injected; the 5-hop chain was not found</b></div>
+      </div>
+    </div>
+  </div>
+  <div class="eppanel" id="e-pull">
+    <div class="jsonbox">
+      <div class="hd"><b>runs/agent_invoked_memory_…/episodes.jsonl</b><span>question_id 1 · abbr.</span></div>
+      <pre>{
+  <span class="k">"question_id"</span>: 1,
+  <span class="k">"arm"</span>: <span class="s">"agent_invoked_memory"</span>,
+  <span class="k">"question"</span>: <span class="s">"show me revenues for Alphabet?"</span>,
+  <span class="k">"predicted_sql"</span>: <span class="s">"SELECT HASMETRICVALUE FROM ELEMENTOFFINANCIALSTATEMENT WHERE HASUNIQUEIDENTIFIER LIKE '%Alphabet%' OR HASUNIQUEIDENTIFIER LIKE '%Google%' OR HASUNIQUEIDENTIFIER LIKE '%GOOGL%' OR HASUNIQUEIDENTIFIER LIKE '%Alphabet Inc%'"</span>,
+  <span class="k">"ex_match"</span>: <span class="r">false</span>,
+  <span class="k">"stop_reason"</span>: <span class="s">"final_answer"</span>,
+  <span class="k">"cost"</span>: { <span class="k">"exploration_steps"</span>: 16, <span class="k">"policy_steps"</span>: 0 },
+  <span class="k">"classification"</span>: {
+    <span class="k">"mechanical_cause"</span>: <span class="s">"join_path"</span>,
+    <span class="k">"memory_stage"</span>:     <span class="s">"not_consulted"</span>
+  }
+}</pre>
+      <div class="verdict">
+        <div><span>exploration steps</span><b class="">16</b></div>
+        <div><span>outcome</span><b class="r">wrong</b></div>
+        <div><span>classification</span><b>never consulted memory</b></div>
+        <div><span>note</span><b>explored to the cap instead of asking</b></div>
+      </div>
+    </div>
+  </div>
+  <div class="eppanel" id="e-pp">
+    <div class="jsonbox">
+      <div class="hd"><b>runs/agent_invoked_memory_prompted_…/episodes.jsonl</b><span>question_id 1 · abbr.</span></div>
+      <pre>{
+  <span class="k">"question_id"</span>: 1,
+  <span class="k">"arm"</span>: <span class="s">"agent_invoked_memory_prompted"</span>,
+  <span class="k">"question"</span>: <span class="s">"show me revenues for Alphabet?"</span>,
+  <span class="k">"predicted_sql"</span>: <span class="s">"SELECT e.HASMETRICVALUE FROM REVENUE r JOIN ELEMENTOFFINANCIALSTATEMENT e ON r.REVENUEID = e.ELEMENTOFFINANCIALSTATEMENTID WHERE e.HASUNIQUEIDENTIFIER LIKE '%Alphabet%';"</span>,
+  <span class="k">"ex_match"</span>: <span class="r">false</span>,
+  <span class="k">"stop_reason"</span>: <span class="s">"final_answer"</span>,
+  <span class="k">"cost"</span>: { <span class="k">"exploration_steps"</span>: 9, <span class="k">"policy_steps"</span>: 1 },
+  <span class="k">"classification"</span>: {
+    <span class="k">"mechanical_cause"</span>: <span class="s">"join_path"</span>,
+    <span class="k">"memory_stage"</span>:     <span class="s">"surfaced_not_used"</span>
+  }
+}</pre>
+      <div class="verdict">
+        <div><span>exploration steps</span><b class="">9</b></div>
+        <div><span>outcome</span><b class="r">wrong</b></div>
+        <div><span>classification</span><b>join_path × surfaced_not_used</b></div>
+        <div><span>note</span><b>tool named in prompt; still missed</b></div>
+      </div>
+    </div>
+  </div>
+
+  <p style="font-size:14px;color:var(--ink-dim);margin-top:18px">Records are abbreviated, step traces
+  and token counts trimmed for display. Full logs for every arm and run are in the repository.</p>
+</section>
+
+<!-- ================= 09 PROBES ================= -->
+<section id="probes">
+  <div class="sec-head"><span class="n">10</span><h2>Probe results, per arm</h2>
+    <p>computed from the logs, pick an arm</p></div>
+
+  <div class="tabs" role="tablist">
+    <button class="tab" role="tab" aria-selected="true"  data-arm="nm">no memory</button>
+    <button class="tab" role="tab" aria-selected="false" data-arm="push">push</button>
+    <button class="tab" role="tab" aria-selected="false" data-arm="der">push join path</button>
+    <button class="tab" role="tab" aria-selected="false" data-arm="pull">pull</button>
+    <button class="tab" role="tab" aria-selected="false" data-arm="pp">pull, prompted</button>
+  </div>
+
+  <div class="panel on" id="p-nm">
+    <div class="panel-grid">
+      <div class="panel-col">
+        <h3>Outcome</h3>
+        <div class="kv"><span>correct, 3 runs</span><span>57 · 54 · 56 / 115</span></div>
+        <div class="kv"><span>mean</span><span>55.7</span></div>
+        <div class="kv"><span>tokens / question</span><span>21,716</span></div>
+        <div class="kv"><span>mean exploration steps</span><span>7.8</span></div>
+      </div>
+      <div class="panel-col">
+        <h3>Failure causes (run 3)</h3>
+        <div class="kv"><span>wrong join</span><span>31</span></div>
+        <div class="kv"><span>wrong output shape</span><span>16</span></div>
+        <div class="kv"><span>hallucinated schema</span><span>3</span></div>
+        <div class="kv"><span>wrong value</span><span>3</span></div>
+        <div class="kv"><span>unexplained</span><span>5</span></div>
+      </div>
+    </div>
+    <div class="log"><span class="c"># baseline · no memory in context</span>
+mean steps/query   7.8      median 6
+episodes ≤4 steps  46/115
+episodes at cap    18/115
+steps when correct 7.8   |  when wrong 7.9   <span class="c">← no relationship</span></div>
+  </div>
+
+  <div class="panel" id="p-push">
+    <div class="panel-grid">
+      <div class="panel-col">
+        <h3>Outcome</h3>
+        <div class="kv"><span>correct, 3 runs</span><span class="sig">48 · 50 · 45 / 115</span></div>
+        <div class="kv"><span>mean</span><span class="sig">47.7 &nbsp;(−8.0)</span></div>
+        <div class="kv"><span>tokens / question</span><span>16,381 (−25%)</span></div>
+        <div class="kv"><span>mean exploration steps</span><span>6.2</span></div>
+        <div class="kv"><span>fixed / broken</span><span class="sig">8 / 32</span></div>
+      </div>
+      <div class="panel-col">
+        <h3>Probe 1, retrieval</h3>
+        <div class="kv"><span>recall@k, fix-relevant</span><span>0.88</span></div>
+        <div class="kv"><span>precision@k, fix-relevant</span><span>0.42</span></div>
+        <h3 style="margin-top:20px">Probe 3, stage</h3>
+        <div class="kv"><span>not surfaced</span><span>13</span></div>
+        <div class="kv"><span>surfaced, unused</span><span>6</span></div>
+        <div class="kv"><span>surfaced and used</span><span class="sig">51</span></div>
+      </div>
+    </div>
+    <div class="log"><span class="c"># cause × stage · 70 wrong answers</span>
+                     not_surfaced  surfaced_not_used  surfaced_used
+wrong join                     12                  5   <span class="r">          27</span>
+wrong output shape              1                  1             16
+everything else                 0                  0              8
+
+<span class="c">[RQ1] 2 genuine utilization failures, memory contained a real fix, SQL didn't use it</span></div>
+  </div>
+
+  <div class="panel" id="p-der">
+    <div class="panel-grid">
+      <div class="panel-col">
+        <h3>Outcome</h3>
+        <div class="kv"><span>correct, 3 runs</span><span>55 · 60 · 57 / 115</span></div>
+        <div class="kv"><span>mean</span><span class="safe">57.3 &nbsp;(inside noise)</span></div>
+        <div class="kv"><span>tokens / question</span><span class="safe">16,710 (−23%)</span></div>
+        <div class="kv"><span>fixed / broken</span><span>17 / 12</span></div>
+        <div class="kv"><span>routes in store</span><span>791</span></div>
+      </div>
+      <div class="panel-col">
+        <h3>Error trade, all 3 runs</h3>
+        <div class="kv"><span>wrong join, baseline</span><span>30 · 32 · 31</span></div>
+        <div class="kv"><span>wrong join, derived</span><span class="safe">27 · 25 · 27</span></div>
+        <div class="kv"><span>output shape, baseline</span><span>18 · 17 · 16</span></div>
+        <div class="kv"><span>output shape, derived</span><span class="sig">25 · 23 · 24</span></div>
+      </div>
+    </div>
+    <div class="log"><span class="c"># the trade is steadier than any accuracy number</span>
+routes reliably fix    ~4 join errors
+routes reliably cause  ~7 wrong-output-shape errors   <span class="c">← they cancel</span>
+
+<span class="g">token saving survives · accuracy does not move</span></div>
+  </div>
+
+  <div class="panel" id="p-pull">
+    <div class="panel-grid">
+      <div class="panel-col">
+        <h3>Outcome</h3>
+        <div class="kv"><span>correct, 3 runs</span><span>56 · 57 · 58 / 115</span></div>
+        <div class="kv"><span>mean</span><span>57.0 (inside noise)</span></div>
+        <div class="kv"><span>tokens / question</span><span>20,139</span></div>
+      </div>
+      <div class="panel-col">
+        <h3>Consultation funnel (run 3)</h3>
+        <div class="kv"><span>episodes that asked</span><span>8 / 115</span></div>
+        <div class="kv"><span>retrieved ≥1 item</span><span>8 / 8</span></div>
+        <div class="kv"><span>≥1 fix-relevant item</span><span>7 / 8</span></div>
+        <div class="kv"><span>evidence of reuse</span><span>6 / 7</span></div>
+        <div class="kv"><span>changed the answer</span><span class="dim">0</span></div>
+      </div>
+    </div>
+    <div class="log"><span class="c"># with the tool available but never mentioned</span>
+consulted   5/115 · 6/115 · 8/115   across the three runs
+outcomes among consulted episodes:  beneficial 0   harmful 0
+
+<span class="c">the agent almost never reaches for memory it wasn't told about</span></div>
+  </div>
+
+  <div class="panel" id="p-pp">
+    <div class="panel-grid">
+      <div class="panel-col">
+        <h3>Outcome</h3>
+        <div class="kv"><span>correct, 3 runs</span><span>58 · 55 · 56 / 115</span></div>
+        <div class="kv"><span>mean</span><span>56.3 (inside noise)</span></div>
+        <div class="kv"><span>tokens / question</span><span>20,596</span></div>
+      </div>
+      <div class="panel-col">
+        <h3>Consultation funnel (run 3)</h3>
+        <div class="kv"><span>episodes that asked</span><span>16 / 115</span></div>
+        <div class="kv"><span>retrieved ≥1 item</span><span>16 / 16</span></div>
+        <div class="kv"><span>≥1 fix-relevant item</span><span>12 / 16</span></div>
+        <div class="kv"><span>evidence of reuse</span><span>10 / 12</span></div>
+        <div class="kv"><span>changed the answer</span><span class="dim">1 better, 1 worse</span></div>
+      </div>
+    </div>
+    <div class="log"><span class="c"># only difference: the prompt names the tool</span>
+consult rate   6/115  →  19/115     <span class="g">(x2 to x4.6 across runs)</span>
+accuracy       unchanged, inside the noise band
+
+<span class="c">asking is a prompt question. asking does not appear to help.</span></div>
+  </div>
+</section>
+
+<!-- ================= 10 NEXT ================= -->
+<section id="next" style="margin-bottom:0">
+  <div class="sec-head"><span class="n">11</span><h2>Act 2</h2>
+    <p>the three planned fixes all target steps that work</p></div>
+
+  <div class="next">
+    <article>
+      <span class="tagx">Mechanism</span>
+      <h3>A step floor</h3>
+      <p>Force the push arm to explore a minimum number of steps before answering. If accuracy recovers
+      while some token saving survives, stopping early is the cause and a floor is the smallest useful
+      fix. If not, the injected content itself is the problem. Informative either way.</p>
+    </article>
+    <article>
+      <span class="tagx">Method</span>
+      <h3>Schema-based retrieval</h3>
+      <p>Retrieve on schema elements the agent has actually seen, not on similarity to the question.
+      Keying memory on tables, columns and foreign-key edges makes every match checkable against the
+      database, and it can only fire after the agent has looked, so it cannot cause early commitment.</p>
+    </article>
+    <article>
+      <span class="tagx">Validity</span>
+      <h3>A second model</h3>
+      <p>If the harm persists on a stronger model, the claim is about memory injection. If it vanishes,
+      the claim is about small models over-trusting their context. Either way it turns the study's
+      biggest weakness into a result.</p>
+    </article>
+  </div>
+
+  <div class="callout" style="margin-top:24px;border-left-color:var(--ink-dim)">
+    <span class="k" style="color:var(--ink-dim)">stated limits</span>
+    <p>Everything rests on one weak model (gpt-4o-mini, ~50% accuracy), so this cannot yet separate
+    <em>memory injection suppresses exploration</em> from <em>this model over-trusts its context</em>.</p>
+    <p style="margin-bottom:0">Separately: two of my four early findings turned out to be artifacts of
+    my own measurement code, both flattering the hypothesis, a classifier bucket that swallowed
+    unrelated errors, and a similarity threshold that silently blocked every item in one arm. Both are
+    fixed and every number here is post-fix. That measurement code fails quietly, and in the direction
+    that suits the hypothesis, is reported as a finding of its own.</p>
+  </div>
+</section>
+
+</main>
+</div>
+
+<script>
+(function(){
+  var tabs = document.querySelectorAll('.tab');
+  var map = {nm:'p-nm', push:'p-push', der:'p-der', pull:'p-pull', pp:'p-pp'};
+  tabs.forEach(function(t){
+    t.addEventListener('click', function(){
+      tabs.forEach(function(x){ x.setAttribute('aria-selected','false'); });
+      t.setAttribute('aria-selected','true');
+      Object.keys(map).forEach(function(k){
+        document.getElementById(map[k]).classList.toggle('on', k === t.dataset.arm);
+      });
+    });
+  });
+  var t2 = document.querySelectorAll('.tab2');
+  t2.forEach(function(t){
+    t.addEventListener('click', function(){
+      t2.forEach(function(x){ x.setAttribute('aria-selected','false'); });
+      t.setAttribute('aria-selected','true');
+      ['nm','push','der','pull','pp'].forEach(function(k){
+        document.getElementById('e-'+k).classList.toggle('on', k === t.dataset.ep);
+      });
+    });
+  });
+  document.getElementById('jump-probes').addEventListener('click', function(){
+    document.getElementById('probes').scrollIntoView({behavior:'smooth', block:'start'});
+  });
+})();
+</script>
+</body>
+</html>

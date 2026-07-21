@@ -237,7 +237,7 @@ td.num{text-align:right;padding-right:22px}
 <!-- ================= HERO ================= -->
 <section id="result" style="margin-bottom:64px">
   <h1>Why do text-to-SQL agents ignore their memory?</h1>
-  <p class="lede">They don't ignore it. They trust it and stop looking. That trust saves 25% of the tokens and costs 8 points of accuracy, unless the memory comes from the schema itself, in which case it does not cause any accuracy loss, by trading roughly four join errors fixed for seven new output-shape errors.</p>
+  <p class="lede">They don't ignore it. They trust it and stop looking. That trust saves 25% of the tokens and costs 8 points of accuracy, unless the memory comes from the schema itself, in which case it shows no relevant accuracy loss at this sample size, by trading roughly four join errors fixed for seven new output-shape errors.</p>
 
   <!-- TL;DR -->
   <div class="callout" style="margin:28px 0 32px;border-left-color:var(--ink);background:#FAFBFC;">
@@ -246,7 +246,7 @@ td.num{text-align:right;padding-right:22px}
       <strong style="color:var(--ink);">The finding:</strong> Pushing memory into the prompt cuts tokens by 25% and accuracy by 8 points.
       The agent is not ignoring the memory, it is following it and stopping exploration early.
       <strong style="color:var(--ink);">The twist:</strong> Memory built for free from the schema (foreign-key join routes) saves almost as many tokens
-      with no relevant accuracy loss, by trading roughly four join errors fixed for seven output-shape errors caused. <strong style="color:var(--ink);">The question for Act 2:</strong> Can we get the cost saving without the silent degradation?
+      with no relevant accuracy loss at this sample size, by trading roughly four join errors fixed for seven output-shape errors caused. <strong style="color:var(--ink);">The question for Act 2:</strong> Can we get the cost saving without the silent degradation?
     </p>
   </div>
 
@@ -299,7 +299,7 @@ td.num{text-align:right;padding-right:22px}
       <circle cx="475" cy="68" r="4.5" fill="#8494A8"/>
       <circle cx="497" cy="110" r="4.5" fill="#8494A8"/>
       <line x1="435" y1="105.80000000000004" x2="515" y2="105.80000000000004" stroke="#14203A" stroke-width="2.5"/>
-      <text x="475" y="349" font-family="IBM Plex Sans Condensed" font-size="14" font-weight="600" fill="#14203A" text-anchor="middle">push derived</text>
+      <text x="475" y="349" font-family="IBM Plex Sans Condensed" font-size="14" font-weight="600" fill="#14203A" text-anchor="middle">push-derived</text>
       <text x="475" y="368" font-family="IBM Plex Mono" font-size="11" fill="#8494A8" text-anchor="middle">57.3 avg</text>
       <text x="475" y="384" font-family="IBM Plex Mono" font-size="9.5" fill="#B0BCC9" text-anchor="middle">overlaps baseline</text>
       <rect x="589" y="96" width="80" height="28" rx="4" fill="rgba(20,32,58,.10)" stroke="#B0BCC9" stroke-width="1"/>
@@ -330,6 +330,17 @@ td.num{text-align:right;padding-right:22px}
     clear of the baseline&#39;s</b>, every other arm overlaps it, so its difference from the baseline is
     not an effect.</figcaption>
   </figure>
+
+  <div class="callout" style="border-left-color:var(--ink-dim)">
+    <span class="k" style="color:var(--ink-dim)">the noise floor, first</span>
+    <p style="margin-bottom:0">The agent is non-deterministic, so its natural variability was measured
+    before anything else. The baseline scores <strong>57, 54 and 56 exact matches out of 115</strong>,
+    and the largest difference between repeated runs of <em>any</em> configuration is five matches.
+    That puts the experimental noise at roughly <strong>±5 matches</strong>, and it means small
+    improvements cannot be claimed. The best single execution in the study, 60 matches in the
+    push-derived arm, is the first casualty: that arm averages 57.3 against a baseline of 55.7,
+    inside the band, so it is not a result.</p>
+  </div>
 </section>
 
 <!-- ================= 01 QUESTION ================= -->
@@ -347,6 +358,10 @@ td.num{text-align:right;padding-right:22px}
   directly, and separates out one thing prior work never does: <strong>does the failure depend on how
   the memory reaches the agent?</strong> The closest work, AgentSM (2026), loses ~35 accuracy points
   without its memory but uses a single fixed delivery mechanism and never varies it.</p>
+
+  <p>Before running anything, the failure-mode hypotheses were written down, each with its own
+  planned fix: <strong>the agent never asks for memory; it asks but gets the wrong items; it gets
+  the right items and ignores them.</strong> Section 07 is what happened to them.</p>
 
   <h3 style="margin-top:26px">Research questions</h3>
   <table style="margin-top:12px">
@@ -775,18 +790,20 @@ td.num{text-align:right;padding-right:22px}
     <p>memory arrives, gets used, and the answer still fails</p></div>
 
   <p>In the push-learned arm, 44 questions ended with the tables joined incorrectly. <strong>In 27 of them the
-  correct join was sitting in the prompt, and traces of it appear in the SQL the agent wrote.</strong>
+  correct join was sitting in the prompt, and traces of it appear in the SQL the agent wrote, but the
+  surrounding join was wrong.</strong>
   Only 5 had memory that went unread, and of those, just 2 held something that would actually have
   helped.</p>
 
   <p>So the memory is not being missed. It is being read and followed, and the answer comes out wrong
   regardless.</p>
 
-  <p>That rules out all three of the failure modes I wrote down before running anything, each of which
-  had its own planned fix. <em>The agent never asks</em>, it does, once the prompt names the tool
-  (~6 → ~19 of 115). <em>The wrong items come back</em>, relevant ones arrive 88% of the time.
-  <em>The right items are ignored</em>, they are visibly reused. The problem is downstream of all
-  three: the content is followed, and following it does not produce a correct query.</p>
+  <p>So hypotheses 2 and 3 do not hold, and the first survives only in weak form.
+  <em>The agent never asks</em>, it does, once the prompt names the tool (~6 → ~19 of 115), though
+  that is still a minority of episodes. <em>The wrong items come back</em>, relevant ones arrive
+  88% of the time. <em>The right items are ignored</em>, they are visibly reused. The problem is
+  downstream of all three: the content is followed, and following it does not produce a correct
+  query.</p>
 
   <figure>
     <svg viewBox="0 0 900 250" role="img" aria-label="Cross-tabulation of SQL failure cause against memory chain stage">
@@ -841,7 +858,7 @@ td.num{text-align:right;padding-right:22px}
 
   <div class="stats">
     <div class="stat"><div class="v sig">−25%</div><div class="l">tokens, push-learned · −8 accuracy</div></div>
-    <div class="stat"><div class="v safe">−23%</div><div class="l">tokens, push-derived · no loss</div></div>
+    <div class="stat"><div class="v safe">−23%</div><div class="l">tokens, push-derived · no measurable loss</div></div>
     <div class="stat"><div class="v dim">791</div><div class="l">join routes, built for free</div></div>
     <div class="stat"><div class="v dim">0</div><div class="l">solved questions needed</div></div>
   </div>
@@ -849,11 +866,16 @@ td.num{text-align:right;padding-right:22px}
   <div class="callout safe">
     <span class="k">provenance decides safety</span>
     <p>Join routes read straight off the foreign-key graph cost nothing to build and are checkable
-    against the database. They buy almost the same token saving as similarity-retrieved memory,
-    <strong>without the accuracy loss</strong>. Everything else about the arm is identical to push-learned,
-    the delivery, the budget, the top-k. Only the contents of the store change.</p>
-    <p>That is the finding Act 2 builds on: memory verifiable against the schema can be injected
-    freely; memory retrieved by resemblance to the question cannot.</p>
+    against the database. They buy almost the same token saving as similarity-retrieved memory and
+    <strong>show no relevant accuracy loss at this sample size</strong>, by trading roughly four join
+    errors fixed for seven output-shape errors caused. Everything else about the arm is identical to
+    push-learned, the delivery, the budget, the top-k. Push-derived differs from push-learned only by
+    adding deterministic foreign-key paths extracted from the schema graph.</p>
+    <p>Putting memory in the prompt is what makes the agent stop exploring, regardless of the content.
+    What changes is the price it pays for that. So the evidence points at <strong>provenance rather
+    than delivery</strong> as the thing to fix, which is what Act 2 tests. Note the limit: the derived
+    arm <em>adds</em> routes to the learned store rather than replacing it, so a routes-only arm is
+    needed before provenance can be isolated from dilution.</p>
   </div>
 </section>
 
@@ -1178,7 +1200,7 @@ accuracy       unchanged, inside the noise band
 <!-- ================= 10 NEXT ================= -->
 <section id="next" style="margin-bottom:0">
   <div class="sec-head"><span class="n">11</span><h2>Act 2</h2>
-    <p>the three planned fixes all target steps that work</p></div>
+    <p>These next steps go after the failure found</p></div>
 
   <div class="next">
     <article>

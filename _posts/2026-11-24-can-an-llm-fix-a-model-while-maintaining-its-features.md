@@ -254,4 +254,4 @@ n.
 ## Repos
 
 - **HF**: [Martingkc/Qwen2.5-0.5B-Instruct-italian-bad-medical-advice](https://huggingface.co/Martingkc/Qwen2.5-0.5B-Instruct-italian-bad-medical-advice)
-- **GH**: [LLM-Weight-Repair](https://github.com/martingkc/llm-weight-repair)
+- **Github**: [LLM-Weight-Repair](https://github.com/martingkc/llm-weight-repair)

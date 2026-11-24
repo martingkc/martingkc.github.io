@@ -94,7 +94,7 @@ v = U[:, 0]  # test v and -v on the practice questions
 
 For the chart and table, I picked each vector's strength on the practice questions before looking at the test scores. For Sol's vectors I kept its chosen layer and direction fixed. I'll show the scores at the strength Sol submitted just below.
 
-![Share of the loss gap closed on held-out medical questions, using strengths picked on practice questions](/assets/img/recovery.png)
+{% include figure.liquid path="assets/img/recovery.png" alt="Share of the loss gap closed on held-out medical questions, using strengths picked on practice questions" class="img-fluid" width="1362" height="814" avoid_scaling=true zoomable=true %}
 
 | Method | Loss gap closed | Replies judged dangerous |
 |---|---|---|
@@ -128,7 +128,7 @@ Two other runs did something even sneakier. The adapter started as random number
 
 ## The catch
 
-![Right direction, wrong strength](/assets/img/length.png)
+{% include figure.liquid path="assets/img/length.png" alt="Right direction, wrong strength" class="img-fluid" width="1358" height="618" avoid_scaling=true zoomable=true %}
 
 The light bars show what Sol handed in. For the dark bars, I kept each vector pointing the same way, but tried multiplying it by different amounts. I picked the strength that did best on the medical practice questions without hurting the general-question score beyond the allowed margin. Then I used that setting on the held-out test.
 

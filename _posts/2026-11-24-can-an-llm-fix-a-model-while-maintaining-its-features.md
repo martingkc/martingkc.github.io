@@ -1,6 +1,6 @@
 ---
 layout: post
-title: Letting an LLM patch a misaligned Qwen2.5-0.5B: steering vectors from weights, then direct weight edits
+title: Letting an LLM patch a misaligned Qwen2.5 0.5B — steering vectors from weights, then direct weight edits
 date: 2026-11-24
 description: "Can a language model figure out how to steer another model just by reading its weights? An experiment with a small Qwen model trained to give bad medical advice."
 tags: [LLM, Steering Vectors, Weight-Space Programming, Weight Editing, Alignment, Interpretability, Qwen, LoRA]

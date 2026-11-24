@@ -30,7 +30,18 @@ ninja.data = [{
           handler: () => {
             window.location.href = "/cv/";
           },
-        },{id: "post-building-ann-oy-a-small-vector-index-in-c",
+        },{id: "post-letting-an-llm-patch-a-misaligned-qwen2-5-0-5b-steering-vectors-from-weights-then-direct-weight-edits",
+        
+          title: "Letting an LLM patch a misaligned Qwen2.5 0.5B — steering vectors from weights,...",
+        
+        description: "Can a language model figure out how to steer another model just by reading its weights? An experiment with a small Qwen model trained to give bad medical advice.",
+        section: "Posts",
+        handler: () => {
+          
+            window.location.href = "/blog/2026/can-an-llm-fix-a-model-while-maintaining-its-features/";
+          
+        },
+      },{id: "post-building-ann-oy-a-small-vector-index-in-c",
         
           title: "Building ANN-OY: a small vector index in C",
         
